@@ -10,12 +10,12 @@ fi
 localGraalVMBin=$(find .graalvm/ -maxdepth 1 -type d | tail -1)
 export PATH=$PWD/$localGraalVMBin/bin:$PATH
 
-mvn clean compile
+mvn clean package
 
 native-image \
     --no-server \
     --static \
-    --class-path target/classes \
+    --class-path target/classes:target/classes/lib/snakeyaml-1.23.jar \
     -H:Path=target \
     -H:Name="pbuild" \
     de.lgohlke.ci.Main

@@ -25,9 +25,9 @@ options:
 - timeout: 10m
   
 steps:
-- step: demo
+- name: demo
   command: 'date'
-- step: sleep
+- name: sleep
   command: 'sleep 2'
   timeout: 10s
   waitfor: ['demo']

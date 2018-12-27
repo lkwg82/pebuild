@@ -16,6 +16,7 @@ native-image \
     --no-server \
     --static \
     --class-path target/classes:target/classes/lib/snakeyaml-1.23.jar \
+    -H:ReflectionConfigurationFiles=graalvm.reflections.json \
     -H:Path=target \
     -H:Name="pbuild" \
     de.lgohlke.ci.Main

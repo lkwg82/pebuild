@@ -13,7 +13,8 @@ class ShellExecutor {
         ProcessBuilder processBuilder = createWrappedInShell(command);
 
         processBuilder.inheritIO()
-                      .start();
+                      .start()
+                      .waitFor();
     }
 
     @SneakyThrows

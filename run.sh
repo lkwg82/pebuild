@@ -12,10 +12,17 @@ export PATH=$PWD/$localGraalVMBin/bin:$PATH
 
 mvn clean compile
 
-native-image --no-server --static -cp target/classes de.lgohlke.ci.Main
-upx -9v de.lgohlke.ci.main
+native-image \
+    --no-server \
+    --static \
+    --class-path target/classes \
+    -H:Path=target \
+    -H:Name="pbuild" \
+    de.lgohlke.ci.Main
 
-./de.lgohlke.ci.main date
+upx -9v target/pbuild
+
+/usr/bin/time -v ./target/pbuild date
 
 if [[ $? == 0 ]]; then
     echo "build ok"

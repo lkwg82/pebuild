@@ -20,7 +20,7 @@ native-image \
     -H:Name="pbuild" \
     de.lgohlke.ci.Main
 
-upx -9v target/pbuild
+upx -v target/pbuild
 
 /usr/bin/time -v ./target/pbuild date
 

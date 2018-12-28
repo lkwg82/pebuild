@@ -1,6 +1,5 @@
 package de.lgohlke.ci.config;
 
-import de.lgohlke.ci.config.dto.BuildConfig;
 import org.junit.jupiter.api.Test;
 
 class BuildConfigReaderTest {
@@ -19,9 +18,6 @@ class BuildConfigReaderTest {
                 "  timeout: 10s\n" +
                 "  waitfor: ['demo']";
 
-        BuildConfig buildConfig = BuildConfigReader.parse(yaml);
-
-        System.out.println(buildConfig);
+        BuildConfigReader.parse(yaml);
     }
-
 }

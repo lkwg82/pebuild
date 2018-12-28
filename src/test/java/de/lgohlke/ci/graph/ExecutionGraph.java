@@ -24,7 +24,7 @@ public class ExecutionGraph {
     public static class Builder {
         private Collection<Job> jobs = new HashSet<>();
 
-        Builder addJob(Job job) {
+        public Builder addJob(Job job) {
             if (jobs.add(job)) {
                 return this;
             }
@@ -40,7 +40,7 @@ public class ExecutionGraph {
             CycleValidator.validate(jobs);
         }
 
-        ExecutionGraph build() {
+        public ExecutionGraph build() {
 
             validate();
             sort();

@@ -18,9 +18,7 @@ class ExecutionGraphTest {
         Job b = new Job("B");
         b.waitFor(a);
 
-        ExecutionGraph graph = new ExecutionGraph.Builder().addJob(a)
-                                                           .addJob(b)
-                                                           .build();
+        ExecutionGraph graph = createGraph(a, b);
 
         assertThat(graph.toString()).isEqualTo("(A [])->(B [A])");
     }
@@ -36,39 +34,17 @@ class ExecutionGraphTest {
 
     @RepeatedTest(10)
     void shouldExecuteInRightOrder() {
-        StepExecutor executorA = new StepExecutor("cmd A", Duration.ZERO, new JobTrigger("A")) {
-            @Override
-            public void runCommand() throws Exception {
-                TimeUnit.MILLISECONDS.sleep(10);
-            }
-        };
-        StepExecutor executorB = new StepExecutor("cmd B", Duration.ZERO, new JobTrigger("B")) {
-            @Override
-            public void runCommand() throws Exception {
-                TimeUnit.MILLISECONDS.sleep(10);
-            }
-        };
-
-        Job a = new Job("A", executorA);
-        Job b = new Job("B", executorB);
+        Job a = createJob("A", 10);
+        Job b = createJob("B", 10);
 
         b.waitFor(a);
 
-        ExecutionGraph graph = new ExecutionGraph.Builder().addJob(a)
-                                                           .addJob(b)
-                                                           .build();
+        createGraph(a, b).execute();
 
-        graph.getJobs()
-             .forEach(j -> j.getExecutor()
-                            .getJobTrigger()
-                            .registerHandler(graph));
-
-        // action
-        graph.execute();
-
-
-        StepExecutor.TimeContext timeContextA = executorA.getTimeContext();
-        StepExecutor.TimeContext timeContextB = executorB.getTimeContext();
+        StepExecutor.TimeContext timeContextA = a.getExecutor()
+                                                 .getTimeContext();
+        StepExecutor.TimeContext timeContextB = b.getExecutor()
+                                                 .getTimeContext();
 
         long endTimeMillisA = timeContextA.getEndTimeMillis();
         long startTimeMillisB = timeContextB.getStartTimeMillis();
@@ -78,28 +54,38 @@ class ExecutionGraphTest {
 
     @Test
     void shouldWaitForLastJobFinished() {
-        StepExecutor executorA = new StepExecutor("A", Duration.ZERO, new JobTrigger("A")) {
-            @Override
-            public void runCommand() throws Exception {
-                TimeUnit.MILLISECONDS.sleep(200);
-            }
-        };
+        Job a = createJob("A", 200);
 
-        Job a = new Job("A", executorA);
+        createGraph(a).execute();
 
-        ExecutionGraph graph = new ExecutionGraph.Builder().addJob(a)
-                                                           .build();
+        long endTimeMillisA = a.getExecutor()
+                               .getTimeContext()
+                               .getEndTimeMillis();
+        assertThat(endTimeMillisA).isGreaterThan(0);
+    }
+
+    private static ExecutionGraph createGraph(Job... jobs) {
+        ExecutionGraph.Builder builder = new ExecutionGraph.Builder();
+        for (Job j : jobs) {
+            builder.addJob(j);
+        }
+        ExecutionGraph graph = builder.build();
 
         graph.getJobs()
              .forEach(j -> j.getExecutor()
                             .getJobTrigger()
                             .registerHandler(graph));
+        return graph;
+    }
 
-        // action
-        graph.execute();
+    private static Job createJob(String name, int delay) {
+        StepExecutor executor = new StepExecutor("cmd " + name, Duration.ZERO, new JobTrigger(name)) {
+            @Override
+            public void runCommand() throws Exception {
+                TimeUnit.MILLISECONDS.sleep(delay);
+            }
+        };
 
-        long endTimeMillisA = executorA.getTimeContext()
-                                       .getEndTimeMillis();
-        assertThat(endTimeMillisA).isGreaterThan(0);
+        return new Job(name, executor);
     }
 }

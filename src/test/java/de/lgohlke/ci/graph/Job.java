@@ -10,11 +10,11 @@ import java.util.stream.Collectors;
 
 @Getter
 @RequiredArgsConstructor
-class Job {
+public class Job {
     private final String name;
     private final Set<Job> waitForJobs = new HashSet<>();
 
-    void waitFor(Job job) {
+    public void waitFor(Job job) {
         waitForJobs.add(job);
     }
 

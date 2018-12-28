@@ -6,8 +6,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class StepExecutorConverter {
     private final Step step;
+    private final FinishNotifier finishNotifier;
 
     public ShellExecutor asShellExecutor() {
-        return new ShellExecutor(step.getCommand(), step.getTimeoutAsDuration());
+        return new ShellExecutor(step.getCommand(), step.getTimeoutAsDuration(), finishNotifier);
     }
 }

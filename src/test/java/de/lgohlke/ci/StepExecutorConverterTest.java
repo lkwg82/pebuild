@@ -13,9 +13,12 @@ class StepExecutorConverterTest {
         step.setCommand("date");
         step.setTimeout("1m");
 
-        StepExecutor executor = new StepExecutorConverter(step).asShellExecutor();
+        FinishNotifier finishNotifier = new FinishNotifier("demo");
+
+        StepExecutor executor = new StepExecutorConverter(step, finishNotifier).asShellExecutor();
 
         assertThat(executor.getCommand()).isEqualTo(step.getCommand());
         assertThat(executor.getTimeout()).isEqualTo(step.getTimeoutAsDuration());
+        assertThat(executor.getFinishNotifier()).isEqualTo(finishNotifier);
     }
 }

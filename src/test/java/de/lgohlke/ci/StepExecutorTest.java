@@ -1,14 +1,16 @@
 package de.lgohlke.ci;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.LongAdder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class StepExecutorTest {
-    private StepExecutor executor = new StepExecutor("", Duration.ZERO) {
+    private StepExecutor executor = new StepExecutor("", Duration.ZERO, new FinishNotifier("A")) {
     };
 
     @Test
@@ -37,5 +39,27 @@ class StepExecutorTest {
     void shouldFailOn2ndExecution() {
         executor.execute();
         assertThrows(IllegalStateException.class, () -> executor.execute());
+    }
+
+    @Nested
+    class finishNotification {
+        @Test
+        void shouldNotifyCompletion() {
+            LongAdder counter = new LongAdder();
+            FinishNotifier finishNotifier = new FinishNotifier("test") {
+
+                @Override
+                public void triggerCompletion() {
+                    counter.increment();
+                }
+            };
+
+            StepExecutor executor = new StepExecutor("", Duration.ZERO, finishNotifier) {
+            };
+
+            executor.execute();
+
+            assertThat(counter.longValue()).isEqualTo(1L);
+        }
     }
 }

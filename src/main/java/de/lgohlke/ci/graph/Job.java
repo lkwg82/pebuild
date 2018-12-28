@@ -11,25 +11,23 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Getter
 public class Job {
+    @Getter
     private final String name;
+    @Getter
     private final StepExecutor executor;
-    private final FinishNotifier finishNotifier;
 
     private final Set<Job> waitForJobs = new HashSet<>();
 
     @Deprecated
     public Job(@NonNull String name) {
-        this(name, new StepExecutor("test", Duration.ZERO) {
-        }, new FinishNotifier() {
+        this(name, new StepExecutor("test", Duration.ZERO, new FinishNotifier("test")) {
         });
     }
 
-    public Job(@NonNull String name, @NonNull StepExecutor executor, @NonNull FinishNotifier finishNotifier) {
+    public Job(@NonNull String name, @NonNull StepExecutor executor) {
         this.name = name;
         this.executor = executor;
-        this.finishNotifier = finishNotifier;
     }
 
     public void waitFor(Job job) {
@@ -48,4 +46,7 @@ public class Job {
         return name + " " + dependsOn;
     }
 
+    public Set<Job> getWaitForJobs() {
+        return new HashSet<>(waitForJobs);
+    }
 }

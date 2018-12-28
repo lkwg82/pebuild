@@ -1,17 +1,21 @@
 package de.lgohlke.ci;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 
 @RequiredArgsConstructor
 @Getter
 @ToString
+@Slf4j
 public abstract class StepExecutor {
-    private final String command;
-    private final Duration timeout;
+    private final @NonNull String command;
+    private final @NonNull Duration timeout;
+    private final @NonNull FinishNotifier finishNotifier;
 
     private TimeContext timeContext = new TimeContext(0, 0);
 
@@ -23,13 +27,15 @@ public abstract class StepExecutor {
 
         long start = System.currentTimeMillis();
         try {
+            log.info("command:" + command);
             runCommand();
+            long end = System.currentTimeMillis();
+            timeContext = new TimeContext(start, end);
+
+            finishNotifier.triggerCompletion();
         } catch (Throwable t) {
             // TODO
         }
-        long end = System.currentTimeMillis();
-
-        timeContext = new TimeContext(start, end);
     }
 
     public void runCommand() {

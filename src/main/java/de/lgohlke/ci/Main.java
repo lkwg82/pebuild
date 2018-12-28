@@ -1,7 +1,9 @@
 package de.lgohlke.ci;
 
 import de.lgohlke.ci.config.BuildConfigReader;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class Main {
     public static void main(String... args) {
         graalvmTest();
@@ -29,5 +31,7 @@ public class Main {
         BuildConfigReader.parse(yaml);
 
         GraphBuilder.build(yaml);
+
+        log.info("test");
     }
 }

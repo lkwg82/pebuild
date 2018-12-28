@@ -12,10 +12,11 @@ export PATH=$PWD/$localGraalVMBin/bin:$PATH
 
 mvn clean package
 
+#    -H:PrintFlags=+ \
 native-image \
     --no-server \
     --static \
-    --class-path target/classes:target/classes/lib/snakeyaml-1.23.jar \
+    --class-path target/classes:target/classes/lib/snakeyaml-1.23.jar:target/classes/lib/slf4j-api-1.8.0-beta2.jar:target/classes/lib/slf4j-simple-1.8.0-beta2.jar \
     -H:ReflectionConfigurationFiles=graalvm.reflections.json \
     -H:Path=target \
     -H:Name="pbuild" \

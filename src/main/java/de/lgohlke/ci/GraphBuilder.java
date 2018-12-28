@@ -27,7 +27,17 @@ public class GraphBuilder {
         ExecutionGraph.Builder builder = new ExecutionGraph.Builder();
         jobMap.values()
               .forEach(builder::addJob);
-        return builder.build();
+        ExecutionGraph graph = builder.build();
+
+        // register as handler
+        graph.getJobs()
+             .forEach(j -> {
+                 StepExecutor executor = j.getExecutor();
+                 FinishNotifier finishNotifier = executor.getFinishNotifier();
+                 finishNotifier.registerHandler(graph);
+             });
+
+        return graph;
     }
 
     private static void resolveJobDependencies(Map<String, Step> stepMap, Map<String, Job> jobMap) {
@@ -45,11 +55,10 @@ public class GraphBuilder {
         stepMap.keySet()
                .forEach(name -> {
                    Step step = stepMap.get(name);
-                   StepExecutorConverter converter = new StepExecutorConverter(step);
+                   StepExecutorConverter converter = new StepExecutorConverter(step, new FinishNotifier(name));
                    ShellExecutor executor = converter.asShellExecutor();
 
-                   jobMap.put(name, new Job(name, executor, new FinishNotifier() {
-                   }));
+                   jobMap.put(name, new Job(name, executor));
                });
     }
 }

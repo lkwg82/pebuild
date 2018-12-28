@@ -8,8 +8,8 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 class ShellExecutor extends StepExecutor {
-    ShellExecutor(String command, Duration timeout, FinishNotifier finishNotifier) {
-        super(command, timeout, finishNotifier);
+    ShellExecutor(String command, Duration timeout, JobTrigger jobTrigger) {
+        super(command, timeout, jobTrigger);
     }
 
     @SneakyThrows

@@ -33,8 +33,8 @@ public class GraphBuilder {
         graph.getJobs()
              .forEach(j -> {
                  StepExecutor executor = j.getExecutor();
-                 FinishNotifier finishNotifier = executor.getFinishNotifier();
-                 finishNotifier.registerHandler(graph);
+                 JobTrigger jobTrigger = executor.getJobTrigger();
+                 jobTrigger.registerHandler(graph);
              });
 
         return graph;
@@ -55,7 +55,7 @@ public class GraphBuilder {
         stepMap.keySet()
                .forEach(name -> {
                    Step step = stepMap.get(name);
-                   StepExecutorConverter converter = new StepExecutorConverter(step, new FinishNotifier(name));
+                   StepExecutorConverter converter = new StepExecutorConverter(step, new JobTrigger(name));
                    ShellExecutor executor = converter.asShellExecutor();
 
                    jobMap.put(name, new Job(name, executor));

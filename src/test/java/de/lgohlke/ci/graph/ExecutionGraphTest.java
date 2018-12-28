@@ -1,6 +1,6 @@
 package de.lgohlke.ci.graph;
 
-import de.lgohlke.ci.FinishNotifier;
+import de.lgohlke.ci.JobTrigger;
 import de.lgohlke.ci.StepExecutor;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ class ExecutionGraphTest {
 
     @RepeatedTest(10)
     void shouldExecuteInRightOrder() {
-        StepExecutor executorA = new StepExecutor("A", Duration.ZERO, new FinishNotifier("A")) {
+        StepExecutor executorA = new StepExecutor("A", Duration.ZERO, new JobTrigger("A")) {
             @Override
             public void runCommand() {
                 try {
@@ -46,7 +46,7 @@ class ExecutionGraphTest {
                 }
             }
         };
-        StepExecutor executorB = new StepExecutor("B", Duration.ZERO, new FinishNotifier("B")) {
+        StepExecutor executorB = new StepExecutor("B", Duration.ZERO, new JobTrigger("B")) {
             @Override
             public void runCommand() {
                 try {
@@ -68,7 +68,7 @@ class ExecutionGraphTest {
 
         graph.getJobs()
              .forEach(j -> j.getExecutor()
-                            .getFinishNotifier()
+                            .getJobTrigger()
                             .registerHandler(graph));
 
         // action
@@ -86,7 +86,7 @@ class ExecutionGraphTest {
 
     @Test
     void shouldWaitForLastJobFinished() {
-        StepExecutor executorA = new StepExecutor("A", Duration.ZERO, new FinishNotifier("A")) {
+        StepExecutor executorA = new StepExecutor("A", Duration.ZERO, new JobTrigger("A")) {
             @Override
             public void runCommand() {
                 try {
@@ -104,7 +104,7 @@ class ExecutionGraphTest {
 
         graph.getJobs()
              .forEach(j -> j.getExecutor()
-                            .getFinishNotifier()
+                            .getJobTrigger()
                             .registerHandler(graph));
 
         // action

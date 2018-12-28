@@ -13,12 +13,12 @@ class StepExecutorConverterTest {
         step.setCommand("date");
         step.setTimeout("1m");
 
-        FinishNotifier finishNotifier = new FinishNotifier("demo");
+        JobTrigger jobTrigger = new JobTrigger("demo");
 
-        StepExecutor executor = new StepExecutorConverter(step, finishNotifier).asShellExecutor();
+        StepExecutor executor = new StepExecutorConverter(step, jobTrigger).asShellExecutor();
 
         assertThat(executor.getCommand()).isEqualTo(step.getCommand());
         assertThat(executor.getTimeout()).isEqualTo(step.getTimeoutAsDuration());
-        assertThat(executor.getFinishNotifier()).isEqualTo(finishNotifier);
+        assertThat(executor.getJobTrigger()).isEqualTo(jobTrigger);
     }
 }

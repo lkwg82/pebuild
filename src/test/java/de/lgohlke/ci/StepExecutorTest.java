@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class StepExecutorTest {
-    private StepExecutor executor = new StepExecutor("", Duration.ZERO, new FinishNotifier("A")) {
+    private StepExecutor executor = new StepExecutor("", Duration.ZERO, new JobTrigger("A")) {
     };
 
     @Test
@@ -46,7 +46,7 @@ class StepExecutorTest {
         @Test
         void shouldNotifyCompletion() {
             LongAdder counter = new LongAdder();
-            FinishNotifier finishNotifier = new FinishNotifier("test") {
+            JobTrigger jobTrigger = new JobTrigger("test") {
 
                 @Override
                 public void triggerCompletion() {
@@ -54,7 +54,7 @@ class StepExecutorTest {
                 }
             };
 
-            StepExecutor executor = new StepExecutor("", Duration.ZERO, finishNotifier) {
+            StepExecutor executor = new StepExecutor("", Duration.ZERO, jobTrigger) {
             };
 
             executor.execute();

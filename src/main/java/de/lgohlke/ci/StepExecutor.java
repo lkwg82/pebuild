@@ -15,7 +15,7 @@ import java.time.Duration;
 public abstract class StepExecutor {
     private final @NonNull String command;
     private final @NonNull Duration timeout;
-    private final @NonNull FinishNotifier finishNotifier;
+    private final @NonNull JobTrigger jobTrigger;
 
     private TimeContext timeContext = new TimeContext(0, 0);
 
@@ -32,7 +32,7 @@ public abstract class StepExecutor {
             long end = System.currentTimeMillis();
             timeContext = new TimeContext(start, end);
 
-            finishNotifier.triggerCompletion();
+            jobTrigger.triggerCompletion();
         } catch (Throwable t) {
             // TODO
         }

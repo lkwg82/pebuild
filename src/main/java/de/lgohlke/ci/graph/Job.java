@@ -1,6 +1,6 @@
 package de.lgohlke.ci.graph;
 
-import de.lgohlke.ci.FinishNotifier;
+import de.lgohlke.ci.JobTrigger;
 import de.lgohlke.ci.StepExecutor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -21,7 +21,7 @@ public class Job {
 
     @Deprecated
     public Job(@NonNull String name) {
-        this(name, new StepExecutor("test", Duration.ZERO, new FinishNotifier("test")) {
+        this(name, new StepExecutor("test", Duration.ZERO, new JobTrigger("test")) {
         });
     }
 

@@ -18,7 +18,11 @@ public class Step {
         timeout = new TimeoutOptionParser().parseString(duration);
     }
 
-    protected Duration getTimeout() {
+    public String getTimeout() {
+        return timeout + "";
+    }
+
+    public Duration getTimeoutAsDuration() {
         return timeout;
     }
 }

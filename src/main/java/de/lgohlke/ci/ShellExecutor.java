@@ -7,7 +7,11 @@ import java.io.InputStreamReader;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-class ShellExecutor {
+class ShellExecutor extends StepExecutor {
+    ShellExecutor(String command, Duration timeout) {
+        super(command, timeout);
+    }
+
     @SneakyThrows
     static void executeInheritedIO(String command) {
         ProcessBuilder processBuilder = createWrappedInShell(command);

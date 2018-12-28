@@ -3,6 +3,7 @@ package de.lgohlke.ci.graph;
 import de.lgohlke.ci.graph.validators.CycleValidator;
 import de.lgohlke.ci.graph.validators.ReferencedJobMissingValidator;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Collection;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class ExecutionGraph {
+    @Getter
     private final Collection<Job> jobs;
 
     @Override

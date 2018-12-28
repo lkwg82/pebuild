@@ -38,7 +38,7 @@ public abstract class StepExecutor {
         }
     }
 
-    public void runCommand() {
+    public void runCommand() throws Exception {
         // TODO
     }
 

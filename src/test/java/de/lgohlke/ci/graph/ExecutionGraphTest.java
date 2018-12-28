@@ -36,24 +36,16 @@ class ExecutionGraphTest {
 
     @RepeatedTest(10)
     void shouldExecuteInRightOrder() {
-        StepExecutor executorA = new StepExecutor("A", Duration.ZERO, new JobTrigger("A")) {
+        StepExecutor executorA = new StepExecutor("cmd A", Duration.ZERO, new JobTrigger("A")) {
             @Override
-            public void runCommand() {
-                try {
-                    TimeUnit.MILLISECONDS.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            public void runCommand() throws Exception {
+                TimeUnit.MILLISECONDS.sleep(10);
             }
         };
-        StepExecutor executorB = new StepExecutor("B", Duration.ZERO, new JobTrigger("B")) {
+        StepExecutor executorB = new StepExecutor("cmd B", Duration.ZERO, new JobTrigger("B")) {
             @Override
-            public void runCommand() {
-                try {
-                    TimeUnit.MILLISECONDS.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            public void runCommand() throws Exception {
+                TimeUnit.MILLISECONDS.sleep(10);
             }
         };
 
@@ -88,12 +80,8 @@ class ExecutionGraphTest {
     void shouldWaitForLastJobFinished() {
         StepExecutor executorA = new StepExecutor("A", Duration.ZERO, new JobTrigger("A")) {
             @Override
-            public void runCommand() {
-                try {
-                    TimeUnit.MILLISECONDS.sleep(200);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            public void runCommand() throws Exception {
+                TimeUnit.MILLISECONDS.sleep(200);
             }
         };
 

@@ -27,5 +27,7 @@ public class Main {
                 "  timeout: 10s\n" +
                 "  waitfor: ['demo']";
         BuildConfigReader.parse(yaml);
+
+        GraphBuilder.build(yaml);
     }
 }

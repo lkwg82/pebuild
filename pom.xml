@@ -54,6 +54,8 @@
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
+                            <includeScope>compile</includeScope>
+                            <excludeGroupIds>org.projectlombok</excludeGroupIds>
                         </configuration>
                     </execution>
                 </executions>

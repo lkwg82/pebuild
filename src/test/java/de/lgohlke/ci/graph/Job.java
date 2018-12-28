@@ -13,20 +13,20 @@ import java.util.stream.Collectors;
 
 @Getter
 public class Job {
-    private final @NonNull String name;
-    private final @NonNull StepExecutor executor;
-    private final @NonNull FinishNotifier finishNotifier;
+    private final String name;
+    private final StepExecutor executor;
+    private final FinishNotifier finishNotifier;
 
     private final Set<Job> waitForJobs = new HashSet<>();
 
     @Deprecated
-    public Job(String name) {
+    public Job(@NonNull String name) {
         this(name, new StepExecutor("test", Duration.ZERO) {
         }, new FinishNotifier() {
         });
     }
 
-    public Job(String name, StepExecutor executor, FinishNotifier finishNotifier) {
+    public Job(@NonNull String name, @NonNull StepExecutor executor, @NonNull FinishNotifier finishNotifier) {
         this.name = name;
         this.executor = executor;
         this.finishNotifier = finishNotifier;

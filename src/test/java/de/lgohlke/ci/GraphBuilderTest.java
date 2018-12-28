@@ -5,6 +5,7 @@ import de.lgohlke.ci.config.dto.BuildConfig;
 import de.lgohlke.ci.config.dto.Step;
 import de.lgohlke.ci.graph.ExecutionGraph;
 import de.lgohlke.ci.graph.Job;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -27,6 +28,13 @@ class GraphBuilderTest {
             "  timeout: 10s\n" +
             "  waitfor: ['demo']";
     private ExecutionGraph graph = GraphBuilder.build(yaml);
+    private Map<String, Job> jobMap = new HashMap<>();
+
+    @BeforeEach
+    void setUp() {
+        graph.getJobs()
+             .forEach(j -> jobMap.put(j.getName(), j));
+    }
 
     @Test
     void shouldHaveCorrectOrder() {
@@ -34,12 +42,7 @@ class GraphBuilderTest {
     }
 
     @Test
-    void shouldHaveExecutor() {
-        Map<String, Job> jobMap = new HashMap<>();
-        graph.getJobs()
-             .forEach(j -> jobMap.put(j.getName(), j));
-
-
+    void shouldHaveConfiguredExecutor() {
         Job demo = jobMap.get("demo");
         StepExecutor executor = demo.getExecutor();
 
@@ -91,8 +94,8 @@ class GraphBuilderTest {
                        StepExecutorConverter converter = new StepExecutorConverter(step);
                        ShellExecutor executor = converter.asShellExecutor();
 
-                       // TODO
-                       jobMap.put(name, new Job(name, executor, null));
+                       jobMap.put(name, new Job(name, executor, new FinishNotifier() {
+                       }));
                    });
         }
     }

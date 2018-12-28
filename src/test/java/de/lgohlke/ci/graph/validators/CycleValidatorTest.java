@@ -23,6 +23,15 @@ class CycleValidatorTest {
     }
 
     @Test
+    void detectSelfCycles() {
+        b.waitFor(b);
+
+        List<Job> jobs = Lists.newArrayList(b);
+
+        assertThrows(CycleValidator.CycleDetected.class, () -> CycleValidator.validate(jobs));
+    }
+
+    @Test
     void detectNoCycles() {
         b.waitFor(a);
 

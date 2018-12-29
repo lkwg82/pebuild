@@ -8,8 +8,6 @@ import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.AbstractMap;
@@ -20,6 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -68,7 +67,7 @@ public class ExecutionGraph implements JobTriggerHandler {
 
     @SneakyThrows
     public void execute() {
-        createTimeContextListener();
+        createTimingCollector();
         createWaitList();
 
         synchronized (this) {
@@ -78,22 +77,10 @@ public class ExecutionGraph implements JobTriggerHandler {
         shutDown();
     }
 
-    private void createTimeContextListener() {
-        executorService.submit(() -> {
-            Logger log = LoggerFactory.getLogger(ExecutionGraph.class.getName() + ":timingContextChannel");
-            log.info("started");
-//            String reportDir = Configuration.REPORT_DIRECTORY.value();
+    private void createTimingCollector() {
+        Callable<Boolean> keepRunning = () -> !(executorService.isTerminated() || executorService.isShutdown());
 
-            do {
-                try {
-                    TimingContext timingContext = timingContextChannel.take();
-                    log.info("received:{}", timingContext);
-                } catch (InterruptedException e) {
-                    log.error(e.getMessage(), e);
-                }
-            } while (!executorService.isTerminated());
-            log.info("finished");
-        });
+        executorService.submit(new TimingCollector(timingContextChannel, keepRunning));
     }
 
     private void createWaitList() {

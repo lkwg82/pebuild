@@ -2,6 +2,8 @@ package de.lgohlke.pebuild;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Paths;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -12,8 +14,8 @@ class CompleteIT {
 
         new Main().run();
 
-//        assertThat(Paths.get("target", "pebuild.d")).isDirectory();
-//        assertThat(Paths.get("target", "pebuild.d", "timings")).isRegularFile();
+        assertThat(Paths.get("target", "pebuild.d")).isDirectory();
+        assertThat(Paths.get("target", "pebuild.d", "timings")).isRegularFile();
     }
 
     @Test

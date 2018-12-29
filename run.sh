@@ -10,7 +10,7 @@ fi
 localGraalVMBin=$(find .graalvm/ -maxdepth 1 -type d | tail -1)
 export PATH=$PWD/$localGraalVMBin/bin:$PATH
 
-mvn clean package
+mvn clean verify
 
 classPathOfJar=$(find target/classes/lib -type f| sort | xargs | tr ' ' ':')
 
@@ -23,7 +23,8 @@ native-image \
     -H:Name="pbuild" \
     de.lgohlke.ci.Main
 
-upx -v target/pbuild
+# only for release
+# upx -v target/pbuild
 
 /usr/bin/time -v ./target/pbuild date
 

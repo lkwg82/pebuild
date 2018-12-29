@@ -58,7 +58,7 @@ public class ExecutionGraph implements JobTriggerHandler {
     }
 
     @SneakyThrows
-    void execute() {
+    public void execute() {
         createWaitList();
 
         synchronized (this) {

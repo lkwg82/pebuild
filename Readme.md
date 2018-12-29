@@ -1,6 +1,6 @@
 **summary**
 
-simple powerfull parallel build tool
+simple powerfull parallel build execution tool
 
 **design goals**
 
@@ -8,22 +8,18 @@ simple powerfull parallel build tool
 - robustness
 
 **features**
-- (TODO) yaml-like build file
-- (TODO) maximal parallel builds
-- (TODO) timeout for build steps
-- (TODO) limited and low complexity build language
+- (TODO) yaml-like config file
+- (TODO) maximal parallel executions
+- (TODO) timeout for execution steps
+- (TODO) limited and low complexity config language
 * (TODO) debuggability:
   - (TODO) shows expected execution graph
-  - (TODO) shows output of build steps
+  - (TODO) shows output of execution steps
 
 
-example:
+minimal example:
 
 ```yaml
-
-options:
-- timeout: 10m
-  
 steps:
 - name: demo
   command: 'date'

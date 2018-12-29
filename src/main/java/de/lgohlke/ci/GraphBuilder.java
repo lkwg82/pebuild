@@ -12,18 +12,11 @@ import java.util.Map;
 
 public class GraphBuilder {
     static ExecutionGraph build(@NonNull String yaml) {
-        if (yaml.isEmpty()) {
-            throw new IllegalArgumentException("empty config provided");
-        }
 
         BuildConfig buildConfig = BuildConfigReader.parse(yaml);
 
         Map<String, Step> stepMap = new HashMap<>();
 
-        if (null == buildConfig.getSteps() || buildConfig.getSteps()
-                                                         .isEmpty()) {
-            throw new IllegalStateException("missing steps");
-        }
         buildConfig.getSteps()
                    .forEach(step -> stepMap.put(step.getName(), step));
 

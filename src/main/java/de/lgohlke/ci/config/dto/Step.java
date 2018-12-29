@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 public class Step {
     private String name = "step";
-    private String command = "MISSING";
+    private String command;
     private Duration timeout = Duration.ofMinutes(0);
 
     private List<String> waitfor = new ArrayList<>();

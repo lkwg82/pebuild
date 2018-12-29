@@ -8,7 +8,7 @@ if [[ ! -f .graalvm/graalvm-ce.tar.gz ]]; then
     tar -xvzf .graalvm/graalvm-ce.tar.gz -C ./.graalvm
 fi
 localGraalVMBin=$(find .graalvm/ -maxdepth 1 -type d | tail -1)
-export PATH=$PWD/$localGraalVMBin/bin:$PATH
+export PATH=$PWD/${localGraalVMBin}/bin:$PATH
 
 mvn clean verify
 
@@ -20,13 +20,13 @@ native-image \
     --class-path target/classes:${classPathOfJar} \
     -H:ReflectionConfigurationFiles=graalvm.reflections.json \
     -H:Path=target \
-    -H:Name="pbuild" \
-    de.lgohlke.ci.Main
+    -H:Name="pebuild" \
+    de.lgohlke.pebuild.Main
 
 # only for release
 # upx -v target/pbuild
 
-/usr/bin/time -v ./target/pbuild date
+/usr/bin/time -v ./target/pebuild date
 
 if [[ $? == 0 ]]; then
     echo "build ok"

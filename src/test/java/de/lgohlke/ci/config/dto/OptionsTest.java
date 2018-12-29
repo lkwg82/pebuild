@@ -13,11 +13,11 @@ class OptionsTest {
     void durationSetMinutes() {
         options.setTimeout("11m");
 
-        assertThat(options.getTimeout()).isEqualTo(Duration.ofMinutes(11));
+        assertThat(options.getTimeoutAsDuration()).isEqualTo(Duration.ofMinutes(11));
     }
 
     @Test
     void durationDefault() {
-        assertThat(options.getTimeout()).isEqualTo(Duration.ofMinutes(10));
+        assertThat(options.getTimeoutAsDuration()).isEqualTo(Duration.ofMinutes(10));
     }
 }

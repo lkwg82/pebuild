@@ -29,12 +29,13 @@ public abstract class StepExecutor {
         try {
             log.info("command:" + command);
             runCommand();
+            log.info("completed command {}", command);
             long end = System.currentTimeMillis();
             timeContext = new TimeContext(start, end);
 
             jobTrigger.triggerCompletion();
         } catch (Throwable t) {
-            // TODO
+            t.printStackTrace();
         }
     }
 

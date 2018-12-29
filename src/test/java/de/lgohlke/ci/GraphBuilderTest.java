@@ -15,7 +15,7 @@ class GraphBuilderTest {
 
     private String yaml = "" +
             "options: \n" +
-            "  timeout: 10m\n" +
+            "  timeout: 140s\n" +
             "\n" +
             "steps:\n" +
             "- name: demo\n" +
@@ -52,4 +52,8 @@ class GraphBuilderTest {
         assertThat(executor2.getTimeout()).isEqualTo(Duration.ofSeconds(10));
     }
 
+    @Test
+    void shouldHaveConfiguredTimeout() {
+        assertThat(graph.getTimeout()).isEqualTo(Duration.ofSeconds(140));
+    }
 }

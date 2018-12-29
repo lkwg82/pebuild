@@ -24,7 +24,8 @@ public class GraphBuilder {
         fillJobMapWithoutDependencies(stepMap, jobMap);
         resolveJobDependencies(stepMap, jobMap);
 
-        ExecutionGraph.Builder builder = new ExecutionGraph.Builder();
+        ExecutionGraph.Builder builder = new ExecutionGraph.Builder().timeout(buildConfig.getOptions()
+                                                                                         .getTimeoutAsDuration());
         jobMap.values()
               .forEach(builder::addJob);
         ExecutionGraph graph = builder.build();

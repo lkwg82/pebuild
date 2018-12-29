@@ -18,7 +18,7 @@ class ExecutionGraphTest {
         Job b = new Job("B");
         b.waitFor(a);
 
-        ExecutionGraph graph = createGraph(a, b);
+        ExecutionGraph graph = createGraph(Duration.ofMinutes(10), a, b);
 
         assertThat(graph.toString()).isEqualTo("(A [])->(B [A])");
     }
@@ -39,7 +39,7 @@ class ExecutionGraphTest {
 
         b.waitFor(a);
 
-        createGraph(a, b).execute();
+        createGraph(Duration.ofMinutes(10), a, b).execute();
 
         StepExecutor.TimeContext timeContextA = a.getExecutor()
                                                  .getTimeContext();
@@ -56,7 +56,7 @@ class ExecutionGraphTest {
     void shouldWaitForLastJobFinished() {
         Job a = createJob("A", 200);
 
-        createGraph(a).execute();
+        createGraph(Duration.ofMinutes(10), a).execute();
 
         long endTimeMillisA = a.getExecutor()
                                .getTimeContext()
@@ -64,8 +64,21 @@ class ExecutionGraphTest {
         assertThat(endTimeMillisA).isGreaterThan(0);
     }
 
-    private static ExecutionGraph createGraph(Job... jobs) {
-        ExecutionGraph.Builder builder = new ExecutionGraph.Builder();
+    @Test
+    void shouldTimeoutWhenJobExceeds() {
+        long start = System.currentTimeMillis();
+
+        Job a = createJob("A", 2000);
+
+        createGraph(Duration.ofMillis(200), a).execute();
+
+        long end = System.currentTimeMillis();
+
+        assertThat(end - start).isBetween(150L, 350L);
+    }
+
+    private static ExecutionGraph createGraph(Duration timeout, Job... jobs) {
+        ExecutionGraph.Builder builder = new ExecutionGraph.Builder().timeout(timeout);
         for (Job j : jobs) {
             builder.addJob(j);
         }

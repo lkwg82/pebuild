@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,13 +31,18 @@ public class ExecutionGraph implements JobTriggerHandler {
 
     @Getter
     private final Collection<Job> jobs;
+    @Getter
+    private Duration timeout;
+
     private final Map<String, Job> jobNameMap;
     private final CountDownLatch toBeCompletedLatch;
 
     private ExecutorService executorService = Executors.newFixedThreadPool(5);
 
-    private ExecutionGraph(Collection<Job> jobs) {
+    private ExecutionGraph(Collection<Job> jobs, Duration timeout) {
         this.jobs = jobs;
+        this.timeout = timeout;
+
         toBeCompletedLatch = new CountDownLatch(jobs.size() + 1);
         Map<String, Job> map = jobs.stream()
                                    .map(j -> new AbstractMap.SimpleEntry<>(j.getName(), j))
@@ -58,15 +64,20 @@ public class ExecutionGraph implements JobTriggerHandler {
         log.info("waitList: " + waitList);
         onComplete("startDummy");
 
-        toBeCompletedLatch.await();
+        waitAtMaximumTillTimeout();
 
         log.info("shutdown");
         executorService.shutdown();
         try {
-            executorService.awaitTermination(1, TimeUnit.MILLISECONDS);
+            executorService.awaitTermination(10, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             log.error("failed to terminate executorService", e);
         }
+    }
+
+    private void waitAtMaximumTillTimeout() throws InterruptedException {
+        long milliseconds = timeout.getSeconds() * 1000 + timeout.getNano() / 1_000_000;
+        toBeCompletedLatch.await(milliseconds, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -102,13 +113,21 @@ public class ExecutionGraph implements JobTriggerHandler {
     }
 
     public static class Builder {
+        private final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(10);
+
         private Collection<Job> jobs = new HashSet<>();
+        private Duration timeout = DEFAULT_TIMEOUT;
 
         public Builder addJob(Job job) {
             if (jobs.add(job)) {
                 return this;
             }
             throw new DuplicateJobException("tried to add duplicated job: " + job);
+        }
+
+        public Builder timeout(Duration timeout) {
+            this.timeout = timeout;
+            return this;
         }
 
         void sort() {
@@ -125,7 +144,7 @@ public class ExecutionGraph implements JobTriggerHandler {
             validate();
             sort();
 
-            return new ExecutionGraph(jobs);
+            return new ExecutionGraph(jobs, timeout);
         }
 
         class DuplicateJobException extends RuntimeException {

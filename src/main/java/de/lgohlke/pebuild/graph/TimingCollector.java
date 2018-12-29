@@ -20,6 +20,7 @@ class TimingCollector implements Runnable {
     private final TransferQueue<TimingContext> timingContextChannel;
     private final Callable<Boolean> keepRunning;
 
+    // TODO test
     @Override
     public void run() {
         log.info("started");

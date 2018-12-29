@@ -1,8 +1,10 @@
 package de.lgohlke.pebuild.graph;
 
+import de.lgohlke.pebuild.Configuration;
 import de.lgohlke.pebuild.JobTrigger;
 import de.lgohlke.pebuild.StepExecutor;
 import de.lgohlke.pebuild.TimingContext;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ExecutionGraphTest {
+    @BeforeEach
+    void setUp() {
+        Configuration.configureDefaults();
+    }
+
     @Test
     void printGraph() {
         StepExecutor a = createStepExecutor("A", 0);

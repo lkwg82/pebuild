@@ -1,8 +1,11 @@
 package de.lgohlke.pebuild;
 
+import java.nio.file.Paths;
+
 public enum Configuration {
 
-    FILE;
+    FILE,
+    REPORT_DIRECTORY;
 
     private final static String NAMESPACE = "PEBUILD";
 
@@ -23,6 +26,8 @@ public enum Configuration {
 
     public static void configureDefaults() {
         FILE.setIfMissing("pebuild.yml");
+        REPORT_DIRECTORY.setIfMissing(Paths.get("target", "pebuild.d")
+                                           .toString());
     }
 
     public static void showConfig() {

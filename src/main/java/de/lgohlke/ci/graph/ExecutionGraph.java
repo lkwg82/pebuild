@@ -11,13 +11,12 @@ import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,7 +26,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ExecutionGraph implements JobTriggerHandler {
 
-    private final Map<Job, Collection<Job>> waitList = new HashMap<>();
+    private final Map<Job, Collection<Job>> waitList = new ConcurrentHashMap<>();
 
     @Getter
     private final Collection<Job> jobs;
@@ -43,12 +42,12 @@ public class ExecutionGraph implements JobTriggerHandler {
         this.jobs = jobs;
         this.timeout = timeout;
 
-        toBeCompletedLatch = new CountDownLatch(jobs.size() + 1);
+        toBeCompletedLatch = new CountDownLatch(jobs.size());
         Map<String, Job> map = jobs.stream()
                                    .map(j -> new AbstractMap.SimpleEntry<>(j.getName(), j))
                                    .collect(Collectors.toMap(
                                            AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
-        jobNameMap = new TreeMap<>(map);
+        jobNameMap = new ConcurrentHashMap<>(map);
     }
 
     @Override
@@ -60,12 +59,22 @@ public class ExecutionGraph implements JobTriggerHandler {
 
     @SneakyThrows
     void execute() {
+        createWaitList();
+
+        synchronized (this) {
+            startNextJobs();
+        }
+        waitAtMaximumTillTimeout();
+        shutDown();
+    }
+
+    private void createWaitList() {
+        waitList.clear();
         jobs.forEach(j -> waitList.put(j, j.getWaitForJobs()));
         log.info("waitList: " + waitList);
-        onComplete("startDummy");
+    }
 
-        waitAtMaximumTillTimeout();
-
+    private void shutDown() {
         log.info("shutdown");
         executorService.shutdown();
         try {
@@ -85,9 +94,9 @@ public class ExecutionGraph implements JobTriggerHandler {
         log.info("oncomplete: " + jobName);
         toBeCompletedLatch.countDown();
 
-        synchronized (this) {
-            Optional<Job> jobOptional = Optional.ofNullable(jobNameMap.get(jobName));
+        Optional<Job> jobOptional = Optional.ofNullable(jobNameMap.get(jobName));
 
+        synchronized (this) {
             jobOptional.ifPresent(job -> {
                 waitList.forEach((j, waitForJobs) -> {
                     if (waitForJobs.remove(job)) {
@@ -96,20 +105,24 @@ public class ExecutionGraph implements JobTriggerHandler {
                 });
             });
 
-            List<Job> removalFromWaitlist = new ArrayList<>();
-
-            waitList.forEach((j, waitForJobs) -> {
-                if (waitForJobs.isEmpty()) {
-                    Runnable runnable = () -> j.getExecutor()
-                                               .execute();
-                    executorService.submit(runnable);
-                    removalFromWaitlist.add(j);
-                }
-            });
-
-            removalFromWaitlist.forEach(waitList::remove);
-            removalFromWaitlist.clear();
+            startNextJobs();
         }
+    }
+
+    private void startNextJobs() {
+        List<Job> removalFromWaitlist = new ArrayList<>();
+
+        waitList.forEach((j, waitForJobs) -> {
+            if (waitForJobs.isEmpty()) {
+                Runnable runnable = () -> j.getExecutor()
+                                           .execute();
+                executorService.submit(runnable);
+                removalFromWaitlist.add(j);
+            }
+        });
+
+        removalFromWaitlist.forEach(waitList::remove);
+        removalFromWaitlist.clear();
     }
 
     public static class Builder {

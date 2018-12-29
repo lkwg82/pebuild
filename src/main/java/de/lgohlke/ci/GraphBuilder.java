@@ -5,17 +5,25 @@ import de.lgohlke.ci.config.dto.BuildConfig;
 import de.lgohlke.ci.config.dto.Step;
 import de.lgohlke.ci.graph.ExecutionGraph;
 import de.lgohlke.ci.graph.Job;
+import lombok.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class GraphBuilder {
-    static ExecutionGraph build(String yaml) {
+    static ExecutionGraph build(@NonNull String yaml) {
+        if (yaml.isEmpty()) {
+            throw new IllegalArgumentException("empty config provided");
+        }
 
         BuildConfig buildConfig = BuildConfigReader.parse(yaml);
 
         Map<String, Step> stepMap = new HashMap<>();
 
+        if (null == buildConfig.getSteps() || buildConfig.getSteps()
+                                                         .isEmpty()) {
+            throw new IllegalStateException("missing steps");
+        }
         buildConfig.getSteps()
                    .forEach(step -> stepMap.put(step.getName(), step));
 

@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GraphBuilderTest {
 
@@ -55,5 +56,15 @@ class GraphBuilderTest {
     @Test
     void shouldHaveConfiguredTimeout() {
         assertThat(graph.getTimeout()).isEqualTo(Duration.ofSeconds(140));
+    }
+
+    @Test
+    void shouldDetectWhenStepsAtAllAreMissing() {
+        assertThrows(IllegalStateException.class, () -> GraphBuilder.build("steps:"));
+    }
+
+    @Test
+    void shouldHandleEmptyConfig() {
+        assertThrows(IllegalArgumentException.class, () -> GraphBuilder.build(""));
     }
 }

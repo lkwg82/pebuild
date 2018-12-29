@@ -33,7 +33,7 @@ public abstract class StepExecutor {
             long end = System.currentTimeMillis();
             timeContext = new TimeContext(start, end);
 
-            jobTrigger.triggerCompletion();
+            jobTrigger.triggerCompletion(timeContext);
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -46,7 +46,7 @@ public abstract class StepExecutor {
     @RequiredArgsConstructor
     @Getter
     @ToString
-    public class TimeContext {
+    public static class TimeContext {
         private final long startTimeMillis;
         private final long endTimeMillis;
     }

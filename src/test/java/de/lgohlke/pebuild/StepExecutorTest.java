@@ -49,7 +49,7 @@ class StepExecutorTest {
             JobTrigger jobTrigger = new JobTrigger("test") {
 
                 @Override
-                public void triggerCompletion() {
+                public void triggerCompletion(StepExecutor.TimeContext timeContext) {
                     counter.increment();
                 }
             };

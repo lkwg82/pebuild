@@ -1,11 +1,14 @@
 package de.lgohlke.pebuild.graph;
 
 import de.lgohlke.pebuild.JobTriggerHandler;
+import de.lgohlke.pebuild.StepExecutor;
 import de.lgohlke.pebuild.graph.validators.CycleValidator;
 import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.AbstractMap;
@@ -20,7 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TransferQueue;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,6 +40,8 @@ public class ExecutionGraph implements JobTriggerHandler {
 
     private final Map<String, Job> jobNameMap;
     private final CountDownLatch toBeCompletedLatch;
+
+    private final TransferQueue<StepExecutor.TimeContext> timeContextChannel = new LinkedTransferQueue<>();
 
     private ExecutorService executorService = Executors.newFixedThreadPool(5);
 
@@ -59,6 +66,7 @@ public class ExecutionGraph implements JobTriggerHandler {
 
     @SneakyThrows
     public void execute() {
+        createTimeContextListener();
         createWaitList();
 
         synchronized (this) {
@@ -66,6 +74,24 @@ public class ExecutionGraph implements JobTriggerHandler {
         }
         waitAtMaximumTillTimeout();
         shutDown();
+    }
+
+    private void createTimeContextListener() {
+        executorService.submit(() -> {
+            Logger log = LoggerFactory.getLogger(ExecutionGraph.class.getName() + ":timeContextChannel");
+            log.info("started");
+//            String reportDir = Configuration.REPORT_DIRECTORY.value();
+
+            do {
+                try {
+                    StepExecutor.TimeContext timeContext = timeContextChannel.take();
+                    log.info("received:{}", timeContext);
+                } catch (InterruptedException e) {
+                    log.error(e.getMessage(), e);
+                }
+            } while (!executorService.isTerminated());
+            log.info("finished");
+        });
     }
 
     private void createWaitList() {
@@ -90,9 +116,11 @@ public class ExecutionGraph implements JobTriggerHandler {
     }
 
     @Override
-    public void onComplete(String jobName) {
+    public void onComplete(String jobName, StepExecutor.TimeContext timeContext) {
         log.info("oncomplete: " + jobName);
         toBeCompletedLatch.countDown();
+
+        timeContextChannel.offer(timeContext);
 
         Optional<Job> jobOptional = Optional.ofNullable(jobNameMap.get(jobName));
 

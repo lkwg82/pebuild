@@ -15,7 +15,7 @@ public class JobTrigger {
         jobTriggerHandlers.add(handler);
     }
 
-    public void triggerCompletion() {
-        jobTriggerHandlers.forEach(handler -> handler.onComplete(jobName));
+    public void triggerCompletion(StepExecutor.TimeContext timeContext) {
+        jobTriggerHandlers.forEach(handler -> handler.onComplete(jobName, timeContext));
     }
 }

@@ -16,14 +16,14 @@ class JobTriggerTest {
 
         JobTriggerHandler triggerHandler = new JobTriggerHandler() {
             @Override
-            public void onComplete(String jobName) {
+            public void onComplete(String jobName, StepExecutor.TimeContext timeContext) {
                 triggeredJobs.add(jobName);
             }
         };
 
         notifier.registerHandler(triggerHandler);
 
-        notifier.triggerCompletion();
+        notifier.triggerCompletion(new StepExecutor.TimeContext(0, 0));
 
         assertThat(triggeredJobs).containsExactly("test");
     }

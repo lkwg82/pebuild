@@ -2,15 +2,15 @@ package de.lgohlke.pebuild;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.time.Duration;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ShellExecutorTest {
+
     @Test
-    void executeInShell() throws IOException {
+    void executeInShell() {
         String command = "env";
 
         String output = ShellExecutor.execute(command);
@@ -43,7 +43,5 @@ class ShellExecutorTest {
         ExecutionResult result = ShellExecutor.execute3(command, Duration.of(100, MILLIS));
 
         assertThat(result.getExitCode()).isEqualTo(3);
-
     }
-
 }

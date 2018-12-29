@@ -1,23 +1,23 @@
 package de.lgohlke.pebuild.graph.validators;
 
-import de.lgohlke.pebuild.graph.Job;
+import de.lgohlke.pebuild.StepExecutor;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ReferencedJobMissingValidator {
-    public static void validate(Collection<Job> jobs) {
-        Set<Job> allWaitJobs = jobs.stream()
-                                   .map(Job::getWaitForJobs)
-                                   .flatMap(Collection::stream)
-                                   .collect(Collectors.toSet());
+    public static void validate(Collection<StepExecutor> jobs) {
+        Set<StepExecutor> allWaitJobs = jobs.stream()
+                                            .map(StepExecutor::getWaitForJobs)
+                                            .flatMap(Collection::stream)
+                                            .collect(Collectors.toSet());
 
         allWaitJobs.removeAll(jobs);
 
         if (!allWaitJobs.isEmpty()) {
             String jobString = allWaitJobs.stream()
-                                          .map(Job::getName)
+                                          .map(StepExecutor::getName)
                                           .collect(Collectors.joining(","));
             throw new ReferencedJobsMissing("referenced jobs are missing: " + jobString);
         }

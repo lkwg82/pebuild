@@ -31,29 +31,30 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ExecutionGraph implements JobTriggerHandler {
 
-    private final Map<Job, Collection<Job>> waitList = new ConcurrentHashMap<>();
+    private final Map<StepExecutor, Collection<StepExecutor>> waitList = new ConcurrentHashMap<>();
 
     @Getter
-    private final Collection<Job> jobs;
+    private final Collection<StepExecutor> jobs;
     @Getter
     private Duration timeout;
 
-    private final Map<String, Job> jobNameMap;
+    private final Map<String, StepExecutor> jobNameMap;
     private final CountDownLatch toBeCompletedLatch;
 
     private final TransferQueue<StepExecutor.TimeContext> timeContextChannel = new LinkedTransferQueue<>();
 
     private ExecutorService executorService = Executors.newFixedThreadPool(5);
 
-    private ExecutionGraph(Collection<Job> jobs, Duration timeout) {
+    private ExecutionGraph(Collection<StepExecutor> jobs, Duration timeout) {
         this.jobs = jobs;
         this.timeout = timeout;
 
         toBeCompletedLatch = new CountDownLatch(jobs.size());
-        Map<String, Job> map = jobs.stream()
-                                   .map(j -> new AbstractMap.SimpleEntry<>(j.getName(), j))
-                                   .collect(Collectors.toMap(
-                                           AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+        Map<String, StepExecutor> map = jobs.stream()
+                                            .map(j -> new AbstractMap.SimpleEntry<>(j.getName(), j))
+                                            .collect(Collectors.toMap(
+                                                    AbstractMap.SimpleEntry::getKey,
+                                                    AbstractMap.SimpleEntry::getValue));
         jobNameMap = new ConcurrentHashMap<>(map);
     }
 
@@ -122,7 +123,7 @@ public class ExecutionGraph implements JobTriggerHandler {
 
         timeContextChannel.offer(timeContext);
 
-        Optional<Job> jobOptional = Optional.ofNullable(jobNameMap.get(jobName));
+        Optional<StepExecutor> jobOptional = Optional.ofNullable(jobNameMap.get(jobName));
 
         synchronized (this) {
             jobOptional.ifPresent(job -> {
@@ -138,12 +139,11 @@ public class ExecutionGraph implements JobTriggerHandler {
     }
 
     private void startNextJobs() {
-        List<Job> removalFromWaitlist = new ArrayList<>();
+        List<StepExecutor> removalFromWaitlist = new ArrayList<>();
 
         waitList.forEach((j, waitForJobs) -> {
             if (waitForJobs.isEmpty()) {
-                Runnable runnable = () -> j.getExecutor()
-                                           .execute();
+                Runnable runnable = () -> j.execute();
                 executorService.submit(runnable);
                 removalFromWaitlist.add(j);
             }
@@ -156,14 +156,14 @@ public class ExecutionGraph implements JobTriggerHandler {
     public static class Builder {
         private final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(10);
 
-        private Collection<Job> jobs = new HashSet<>();
+        private Collection<StepExecutor> stepExecutors = new HashSet<>();
         private Duration timeout = DEFAULT_TIMEOUT;
 
-        public Builder addJob(Job job) {
-            if (jobs.add(job)) {
+        public Builder addJob(StepExecutor executor) {
+            if (stepExecutors.add(executor)) {
                 return this;
             }
-            throw new DuplicateJobException("tried to add duplicated job: " + job);
+            throw new DuplicateJobException("tried to add duplicated executor: " + executor);
         }
 
         public Builder timeout(Duration timeout) {
@@ -172,12 +172,12 @@ public class ExecutionGraph implements JobTriggerHandler {
         }
 
         void sort() {
-            jobs = new LinkedList<>(TopologicalSorter.sort(jobs));
+            stepExecutors = new LinkedList<>(TopologicalSorter.sort(stepExecutors));
         }
 
         void validate() {
-            ReferencedJobMissingValidator.validate(jobs);
-            CycleValidator.validate(jobs);
+            ReferencedJobMissingValidator.validate(stepExecutors);
+            CycleValidator.validate(stepExecutors);
         }
 
         public ExecutionGraph build() {
@@ -185,7 +185,7 @@ public class ExecutionGraph implements JobTriggerHandler {
             validate();
             sort();
 
-            return new ExecutionGraph(jobs, timeout);
+            return new ExecutionGraph(stepExecutors, timeout);
         }
 
         class DuplicateJobException extends RuntimeException {

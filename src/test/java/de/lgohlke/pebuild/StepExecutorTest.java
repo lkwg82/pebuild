@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class StepExecutorTest {
-    private StepExecutor executor = new StepExecutor("", Duration.ZERO, new JobTrigger("A")) {
+    private StepExecutor executor = new StepExecutor("name", "", Duration.ZERO, new JobTrigger("A")) {
     };
 
     @Test
@@ -54,12 +54,24 @@ class StepExecutorTest {
                 }
             };
 
-            StepExecutor executor = new StepExecutor("", Duration.ZERO, jobTrigger) {
+            StepExecutor executor = new StepExecutor("name", "", Duration.ZERO, jobTrigger) {
             };
 
             executor.execute();
 
             assertThat(counter.longValue()).isEqualTo(1L);
         }
+    }
+
+    @Test
+    void failOnDuplicateWaitForStep() {
+        StepExecutor a = new StepExecutor("A", "", Duration.ZERO, new JobTrigger("A")) {
+        };
+        StepExecutor b = new StepExecutor("B", "", Duration.ZERO, new JobTrigger("B")) {
+        };
+
+        a.waitFor(b);
+
+        assertThrows(IllegalArgumentException.class, () -> a.waitFor(b));
     }
 }

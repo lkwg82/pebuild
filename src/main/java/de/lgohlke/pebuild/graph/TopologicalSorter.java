@@ -1,5 +1,7 @@
 package de.lgohlke.pebuild.graph;
 
+import de.lgohlke.pebuild.StepExecutor;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -10,19 +12,18 @@ import java.util.Set;
 
 class TopologicalSorter {
 
-    static Collection<Job> sort(Collection<Job> jobs) {
+    static Collection<StepExecutor> sort(Collection<StepExecutor> jobs) {
 
-        Collection<Job> sortedJobs = new ArrayList<>();
+        Collection<StepExecutor> sortedJobs = new ArrayList<>();
 
-        Map<Job, Set<Job>> waitList = new LinkedHashMap<>();
+        Map<StepExecutor, Set<StepExecutor>> waitList = new LinkedHashMap<>();
 
-        for (Job j : jobs) {
-            waitList.put(j,
-                         j.getWaitForJobs());
+        for (StepExecutor j : jobs) {
+            waitList.put(j, j.getWaitForJobs());
         }
 
         while (!waitList.isEmpty()) {
-            List<Job> sortedCandidates = new ArrayList<>();
+            List<StepExecutor> sortedCandidates = new ArrayList<>();
             waitList.forEach((j, waits) -> {
                 if (waits.isEmpty()) {
                     sortedCandidates.add(j);
@@ -33,7 +34,7 @@ class TopologicalSorter {
             sortedCandidates.forEach(waitList::remove);
 
             waitList.forEach((j, waits) -> {
-                Set<Job> waitForJobsCopy = new HashSet<>(waits);
+                Set<StepExecutor> waitForJobsCopy = new HashSet<>(waits);
                 if (waitForJobsCopy.removeAll(sortedCandidates)) {
                     waitList.put(j, waitForJobsCopy);
                 }

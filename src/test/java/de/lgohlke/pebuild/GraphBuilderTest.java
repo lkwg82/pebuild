@@ -1,8 +1,8 @@
 package de.lgohlke.pebuild;
 
 import de.lgohlke.pebuild.graph.ExecutionGraph;
-import de.lgohlke.pebuild.graph.Job;
 import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator;
+import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -28,7 +28,7 @@ class GraphBuilderTest {
             "  timeout: 10s\n" +
             "  waitfor: ['demo']";
     private ExecutionGraph graph = GraphBuilder.build(yaml);
-    private Map<String, Job> jobMap = new HashMap<>();
+    private Map<String, StepExecutor> jobMap = new HashMap<>();
 
     @BeforeEach
     void setUp() {
@@ -43,16 +43,14 @@ class GraphBuilderTest {
 
     @Test
     void shouldHaveConfiguredExecutor() {
-        Job demo = jobMap.get("demo");
-        StepExecutor executor = demo.getExecutor();
+        val demo = jobMap.get("demo");
 
-        assertThat(executor.getCommand()).isEqualTo("date");
+        assertThat(demo.getCommand()).isEqualTo("date");
 
-        Job sleep = jobMap.get("sleep");
-        StepExecutor executor2 = sleep.getExecutor();
+        val sleep = jobMap.get("sleep");
 
-        assertThat(executor2.getCommand()).isEqualTo("sleep 2");
-        assertThat(executor2.getTimeout()).isEqualTo(Duration.ofSeconds(10));
+        assertThat(sleep.getCommand()).isEqualTo("sleep 2");
+        assertThat(sleep.getTimeout()).isEqualTo(Duration.ofSeconds(10));
     }
 
     @Test

@@ -14,8 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ExecutionGraphTest {
     @Test
     void printGraph() {
-        Job a = new Job("A");
-        Job b = new Job("B");
+        StepExecutor a = createStepExecutor("A", 0);
+        StepExecutor b = createStepExecutor("B", 0);
         b.waitFor(a);
 
         ExecutionGraph graph = createGraph(Duration.ofMinutes(10), a, b);
@@ -25,7 +25,7 @@ class ExecutionGraphTest {
 
     @Test
     void shouldFailOnDuplicatedJob() {
-        Job a = new Job("A");
+        StepExecutor a = createStepExecutor("A", 0);
 
         ExecutionGraph.Builder builder = new ExecutionGraph.Builder().addJob(a);
 
@@ -34,17 +34,15 @@ class ExecutionGraphTest {
 
     @RepeatedTest(10)
     void shouldExecuteInRightOrder() {
-        Job a = createJob("A", 10);
-        Job b = createJob("B", 10);
+        StepExecutor a = createStepExecutor("A", 10);
+        StepExecutor b = createStepExecutor("B", 10);
 
         b.waitFor(a);
 
         createGraph(Duration.ofMinutes(10), a, b).execute();
 
-        StepExecutor.TimeContext timeContextA = a.getExecutor()
-                                                 .getTimeContext();
-        StepExecutor.TimeContext timeContextB = b.getExecutor()
-                                                 .getTimeContext();
+        StepExecutor.TimeContext timeContextA = a.getTimeContext();
+        StepExecutor.TimeContext timeContextB = b.getTimeContext();
 
         long endTimeMillisA = timeContextA.getEndTimeMillis();
         long startTimeMillisB = timeContextB.getStartTimeMillis();
@@ -54,12 +52,11 @@ class ExecutionGraphTest {
 
     @Test
     void shouldWaitForLastJobFinished() {
-        Job a = createJob("A", 200);
+        StepExecutor a = createStepExecutor("A", 200);
 
         createGraph(Duration.ofMinutes(10), a).execute();
 
-        long endTimeMillisA = a.getExecutor()
-                               .getTimeContext()
+        long endTimeMillisA = a.getTimeContext()
                                .getEndTimeMillis();
         assertThat(endTimeMillisA).isGreaterThan(0);
     }
@@ -68,7 +65,7 @@ class ExecutionGraphTest {
     void shouldTimeoutWhenJobExceeds() {
         long start = System.currentTimeMillis();
 
-        Job a = createJob("A", 2000);
+        StepExecutor a = createStepExecutor("A", 2000);
 
         createGraph(Duration.ofMillis(200), a).execute();
 
@@ -77,28 +74,25 @@ class ExecutionGraphTest {
         assertThat(end - start).isBetween(150L, 350L);
     }
 
-    private static ExecutionGraph createGraph(Duration timeout, Job... jobs) {
+    private static ExecutionGraph createGraph(Duration timeout, StepExecutor... executors) {
         ExecutionGraph.Builder builder = new ExecutionGraph.Builder().timeout(timeout);
-        for (Job j : jobs) {
+        for (StepExecutor j : executors) {
             builder.addJob(j);
         }
         ExecutionGraph graph = builder.build();
 
         graph.getJobs()
-             .forEach(j -> j.getExecutor()
-                            .getJobTrigger()
+             .forEach(j -> j.getJobTrigger()
                             .registerHandler(graph));
         return graph;
     }
 
-    private static Job createJob(String name, int delay) {
-        StepExecutor executor = new StepExecutor("cmd " + name, Duration.ZERO, new JobTrigger(name)) {
+    private static StepExecutor createStepExecutor(String name, int delay) {
+        return new StepExecutor(name, "cmd " + name, Duration.ZERO, new JobTrigger(name)) {
             @Override
             public void runCommand() throws Exception {
                 TimeUnit.MILLISECONDS.sleep(delay);
             }
         };
-
-        return new Job(name, executor);
     }
 }

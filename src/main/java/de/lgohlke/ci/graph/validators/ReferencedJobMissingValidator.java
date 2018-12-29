@@ -24,7 +24,7 @@ public class ReferencedJobMissingValidator {
     }
 
     public static class ReferencedJobsMissing extends RuntimeException {
-        ReferencedJobsMissing(String message) {
+        public ReferencedJobsMissing(String message) {
             super(message);
         }
     }

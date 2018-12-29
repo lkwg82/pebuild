@@ -5,6 +5,7 @@ import de.lgohlke.ci.config.dto.BuildConfig;
 import de.lgohlke.ci.config.dto.Step;
 import de.lgohlke.ci.graph.ExecutionGraph;
 import de.lgohlke.ci.graph.Job;
+import de.lgohlke.ci.graph.validators.ReferencedJobMissingValidator;
 import lombok.NonNull;
 
 import java.util.HashMap;
@@ -43,14 +44,16 @@ public class GraphBuilder {
     }
 
     private static void resolveJobDependencies(Map<String, Step> stepMap, Map<String, Job> jobMap) {
-        stepMap.forEach((name, step) -> {
-            step.getWaitfor()
-                .forEach(waitJobName -> {
-                    Job waitJob = jobMap.get(waitJobName);
-                    Job job = jobMap.get(name);
-                    job.waitFor(waitJob);
-                });
-        });
+        stepMap.forEach((name, step) -> step.getWaitfor()
+                                            .forEach(waitJobName -> {
+                                                Job waitJob = jobMap.get(waitJobName);
+                                                if (null == waitJob) {
+                                                    throw new ReferencedJobMissingValidator.ReferencedJobsMissing(
+                                                            "referenced waitfor step '" + waitJobName + "' from step '" + name + "' is missing: forgotten/mistyped?");
+                                                }
+                                                Job job = jobMap.get(name);
+                                                job.waitFor(waitJob);
+                                            }));
     }
 
     private static void fillJobMapWithoutDependencies(Map<String, Step> stepMap, Map<String, Job> jobMap) {

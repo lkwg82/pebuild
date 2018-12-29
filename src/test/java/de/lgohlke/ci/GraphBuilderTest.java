@@ -2,14 +2,17 @@ package de.lgohlke.ci;
 
 import de.lgohlke.ci.graph.ExecutionGraph;
 import de.lgohlke.ci.graph.Job;
+import de.lgohlke.ci.graph.validators.ReferencedJobMissingValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GraphBuilderTest {
 
@@ -57,4 +60,16 @@ class GraphBuilderTest {
         assertThat(graph.getTimeout()).isEqualTo(Duration.ofSeconds(140));
     }
 
+    @Test
+    void failOnMissingReferencedWaitForJob() {
+        String config = "" +
+                "steps:\n" +
+                " - name: test\n" +
+                "   command: date\n" +
+                "   waitfor: ['missing']\n";
+
+        Executable executable = () -> GraphBuilder.build(config);
+
+        assertThrows(ReferencedJobMissingValidator.ReferencedJobsMissing.class, executable);
+    }
 }

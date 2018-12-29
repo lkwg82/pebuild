@@ -1,30 +1,31 @@
 package de.lgohlke.pebuild;
 
-import de.lgohlke.pebuild.graph.ExecutionGraph;
-import org.assertj.core.util.Files;
 import org.junit.jupiter.api.Test;
 
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.file.Paths;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 class CompleteIT {
     @Test
-    void name() {
-        String content = loadTestConfig("integration/simple.pbuild.yml");
+    void simpleRun() {
+        System.setProperty("PEBUILD_FILE", "src/test/resources/integration/simple.pbuild.yml");
 
-        ExecutionGraph graph = GraphBuilder.build(content);
+        new Main().run();
 
-        graph.execute();
+//        assertThat(Paths.get("target", "pebuild.d")).isDirectory();
+//        assertThat(Paths.get("target", "pebuild.d", "timings")).isRegularFile();
     }
 
-    private String loadTestConfig(String file) {
-        URL resource = getClass().getClassLoader()
-                                 .getResource(file);
-        if (resource == null) {
-            throw new IllegalStateException();
+    @Test
+    void failOnMissingConfigFile() {
+        System.setProperty("PEBUILD_FILE", "unknown.pbuild.yml");
+
+        try {
+            new Main().run();
+
+            fail("should fail on missing config");
+        } catch (IllegalStateException e) {
+            assertThat(e.getMessage()).isEqualTo("missing config file: unknown.pbuild.yml");
         }
-        return Files.contentOf(Paths.get(resource.getFile())
-                                    .toFile(), Charset.defaultCharset());
     }
 }

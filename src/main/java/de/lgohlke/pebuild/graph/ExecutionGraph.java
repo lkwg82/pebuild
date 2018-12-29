@@ -2,6 +2,7 @@ package de.lgohlke.pebuild.graph;
 
 import de.lgohlke.pebuild.JobTriggerHandler;
 import de.lgohlke.pebuild.StepExecutor;
+import de.lgohlke.pebuild.TimingContext;
 import de.lgohlke.pebuild.graph.validators.CycleValidator;
 import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator;
 import lombok.Getter;
@@ -41,7 +42,7 @@ public class ExecutionGraph implements JobTriggerHandler {
     private final Map<String, StepExecutor> jobNameMap;
     private final CountDownLatch toBeCompletedLatch;
 
-    private final TransferQueue<StepExecutor.TimeContext> timeContextChannel = new LinkedTransferQueue<>();
+    private final TransferQueue<TimingContext> timingContextChannel = new LinkedTransferQueue<>();
 
     private ExecutorService executorService = Executors.newFixedThreadPool(5);
 
@@ -79,14 +80,14 @@ public class ExecutionGraph implements JobTriggerHandler {
 
     private void createTimeContextListener() {
         executorService.submit(() -> {
-            Logger log = LoggerFactory.getLogger(ExecutionGraph.class.getName() + ":timeContextChannel");
+            Logger log = LoggerFactory.getLogger(ExecutionGraph.class.getName() + ":timingContextChannel");
             log.info("started");
 //            String reportDir = Configuration.REPORT_DIRECTORY.value();
 
             do {
                 try {
-                    StepExecutor.TimeContext timeContext = timeContextChannel.take();
-                    log.info("received:{}", timeContext);
+                    TimingContext timingContext = timingContextChannel.take();
+                    log.info("received:{}", timingContext);
                 } catch (InterruptedException e) {
                     log.error(e.getMessage(), e);
                 }
@@ -117,11 +118,11 @@ public class ExecutionGraph implements JobTriggerHandler {
     }
 
     @Override
-    public void onComplete(String jobName, StepExecutor.TimeContext timeContext) {
+    public void onComplete(String jobName, TimingContext timingContext) {
         log.info("oncomplete: " + jobName);
         toBeCompletedLatch.countDown();
 
-        timeContextChannel.offer(timeContext);
+        timingContextChannel.offer(timingContext);
 
         Optional<StepExecutor> jobOptional = Optional.ofNullable(jobNameMap.get(jobName));
 
@@ -143,8 +144,7 @@ public class ExecutionGraph implements JobTriggerHandler {
 
         waitList.forEach((j, waitForJobs) -> {
             if (waitForJobs.isEmpty()) {
-                Runnable runnable = () -> j.execute();
-                executorService.submit(runnable);
+                executorService.submit(j::execute);
                 removalFromWaitlist.add(j);
             }
         });

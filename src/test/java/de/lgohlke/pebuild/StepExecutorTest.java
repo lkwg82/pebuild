@@ -16,9 +16,9 @@ class StepExecutorTest {
     @Test
     void shouldHaveZeroInitialisedTimeContext() {
 
-        assertThat(executor.getTimeContext()
+        assertThat(executor.getTimingContext()
                            .getStartTimeMillis()).isZero();
-        assertThat(executor.getTimeContext()
+        assertThat(executor.getTimingContext()
                            .getEndTimeMillis()).isZero();
     }
 
@@ -27,10 +27,10 @@ class StepExecutorTest {
 
         executor.execute();
 
-        assertThat(executor.getTimeContext()
+        assertThat(executor.getTimingContext()
                            .getStartTimeMillis()).isBetween(System.currentTimeMillis() - 1000,
                                                             System.currentTimeMillis());
-        assertThat(executor.getTimeContext()
+        assertThat(executor.getTimingContext()
                            .getEndTimeMillis()).isBetween(System.currentTimeMillis() - 1000,
                                                           System.currentTimeMillis());
     }
@@ -49,7 +49,7 @@ class StepExecutorTest {
             JobTrigger jobTrigger = new JobTrigger("test") {
 
                 @Override
-                public void triggerCompletion(StepExecutor.TimeContext timeContext) {
+                public void triggerCompletion(TimingContext timeContext) {
                     counter.increment();
                 }
             };

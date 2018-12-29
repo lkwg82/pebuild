@@ -2,6 +2,7 @@ package de.lgohlke.pebuild.graph;
 
 import de.lgohlke.pebuild.JobTrigger;
 import de.lgohlke.pebuild.StepExecutor;
+import de.lgohlke.pebuild.TimingContext;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
@@ -41,11 +42,11 @@ class ExecutionGraphTest {
 
         createGraph(Duration.ofMinutes(10), a, b).execute();
 
-        StepExecutor.TimeContext timeContextA = a.getTimeContext();
-        StepExecutor.TimeContext timeContextB = b.getTimeContext();
+        TimingContext timingContextA = a.getTimingContext();
+        TimingContext timingContextB = b.getTimingContext();
 
-        long endTimeMillisA = timeContextA.getEndTimeMillis();
-        long startTimeMillisB = timeContextB.getStartTimeMillis();
+        long endTimeMillisA = timingContextA.getEndTimeMillis();
+        long startTimeMillisB = timingContextB.getStartTimeMillis();
 
         assertThat(startTimeMillisB).isGreaterThanOrEqualTo(endTimeMillisA);
     }
@@ -56,7 +57,7 @@ class ExecutionGraphTest {
 
         createGraph(Duration.ofMinutes(10), a).execute();
 
-        long endTimeMillisA = a.getTimeContext()
+        long endTimeMillisA = a.getTimingContext()
                                .getEndTimeMillis();
         assertThat(endTimeMillisA).isGreaterThan(0);
     }

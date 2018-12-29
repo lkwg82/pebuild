@@ -3,7 +3,6 @@ package de.lgohlke.pebuild;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -14,7 +13,6 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Getter
-@ToString
 @Slf4j
 public abstract class StepExecutor {
     private final @NonNull String name;
@@ -23,11 +21,11 @@ public abstract class StepExecutor {
     private final @NonNull JobTrigger jobTrigger;
 
     private final Set<StepExecutor> waitForJobs = new HashSet<>();
-    private TimeContext timeContext = new TimeContext(0, 0);
+    private TimingContext timingContext = new TimingContext("unset", 0, 0);
 
     public final void execute() {
 
-        if (timeContext.endTimeMillis != 0) {
+        if (timingContext.getEndTimeMillis() != 0) {
             throw new IllegalStateException("this step already ran: " + this);
         }
 
@@ -37,9 +35,9 @@ public abstract class StepExecutor {
             runCommand();
             log.info("completed command {}", command);
             long end = System.currentTimeMillis();
-            timeContext = new TimeContext(start, end);
+            timingContext = new TimingContext(name, start, end);
 
-            jobTrigger.triggerCompletion(timeContext);
+            jobTrigger.triggerCompletion(timingContext);
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -67,13 +65,5 @@ public abstract class StepExecutor {
 
     public Set<StepExecutor> getWaitForJobs() {
         return new HashSet<>(waitForJobs);
-    }
-
-    @RequiredArgsConstructor
-    @Getter
-    @ToString
-    public static class TimeContext {
-        private final long startTimeMillis;
-        private final long endTimeMillis;
     }
 }

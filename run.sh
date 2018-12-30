@@ -12,8 +12,13 @@ export PATH=$PWD/${localGraalVMBin}/bin:$PATH
 
 mvn clean verify
 
+# wait to not interfere with ide
+sleep 3
+
 classPathOfJar=$(find target/classes/lib -type f| sort | xargs | tr ' ' ':')
 
+
+set -x
 native-image \
     --no-server \
     --static \
@@ -22,6 +27,8 @@ native-image \
     -H:Path=target \
     -H:Name="pebuild" \
     de.lgohlke.pebuild.Main
+set +x
+
 
 # only for release
 # upx -v target/pbuild

@@ -4,6 +4,6 @@ steps:
   - name: second
     command: echo hello world
   - name: sleep
-    command: sleep 2
+    command: sleep 1
     waitfor: ["first"]
 

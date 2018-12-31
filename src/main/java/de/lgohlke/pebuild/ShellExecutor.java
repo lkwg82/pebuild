@@ -4,6 +4,8 @@ import lombok.SneakyThrows;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
@@ -19,6 +21,21 @@ class ShellExecutor extends StepExecutor {
         processBuilder.inheritIO()
                       .start()
                       .waitFor();
+    }
+
+    @Override
+    public void runCommand() throws Exception {
+        Process process = createWrappedInShell(getCommand()).start();
+
+        String filename = "step." + getName() + ".output";
+        Path outputFile = Paths.get(Configuration.REPORT_DIRECTORY.value(), filename);
+        CombinedStreamFascade streamFascade = new CombinedStreamFascade(getName(),
+                                                                        process.getInputStream(),
+                                                                        process.getErrorStream(),
+                                                                        outputFile);
+        streamFascade.start();
+        process.waitFor();
+        streamFascade.stop();
     }
 
     @SneakyThrows
@@ -63,6 +80,8 @@ class ShellExecutor extends StepExecutor {
     static ExecutionResult execute3(String command, Duration maxDuration) {
 
         Process process = createWrappedInShell(command).start();
+
+
         String stdout = "";
         long seconds = maxDuration.getSeconds();
         int nano = maxDuration.getNano();
@@ -73,8 +92,8 @@ class ShellExecutor extends StepExecutor {
         boolean exitedBeforeTimeout = process.waitFor(timeout, TimeUnit.MILLISECONDS);
 
         if (!exitedBeforeTimeout) {
-            int exitCode = process.destroyForcibly()
-                                  .waitFor();
+            process.destroy();
+            int exitCode = process.waitFor();
             return new ExecutionResult(exitCode, stdout);
         }
         return new ExecutionResult(process.waitFor(), stdout);

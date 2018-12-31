@@ -14,6 +14,8 @@ class CompleteIT {
 
         assertThat(Paths.get("target", "pebuild.d")).isDirectory()
         assertThat(Paths.get("target", "pebuild.d", "timings")).isRegularFile()
+        assertThat(Paths.get("target", "pebuild.d", "step.second.output")).isRegularFile()
+        assertThat(Paths.get("target", "pebuild.d", "step.second.output")).hasContent("STDOUT hello world")
     }
 
     @Test

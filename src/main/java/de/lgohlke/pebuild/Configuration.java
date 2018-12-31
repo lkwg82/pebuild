@@ -17,7 +17,7 @@ public enum Configuration {
         return NAMESPACE + "_" + name();
     }
 
-    private void setIfMissing(String value) {
+    public void setIfMissing(String value) {
         if (!System.getProperties()
                    .containsKey(fullName())) {
             System.setProperty(fullName(), value);

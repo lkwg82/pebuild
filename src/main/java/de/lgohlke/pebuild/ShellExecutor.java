@@ -28,6 +28,12 @@ class ShellExecutor extends StepExecutor {
         Process process = createWrappedInShell(getCommand()).start();
 
         String filename = "step." + getName() + ".output";
+
+        if (Configuration.REPORT_DIRECTORY.value()
+                                          .isEmpty()) {
+            Configuration.REPORT_DIRECTORY.setIfMissing(System.getProperty("user.dir"));
+        }
+
         Path outputFile = Paths.get(Configuration.REPORT_DIRECTORY.value(), filename);
         CombinedStreamFascade streamFascade = new CombinedStreamFascade(getName(),
                                                                         process.getInputStream(),

@@ -23,6 +23,7 @@ native-image \
     --no-server \
     --static \
     --class-path target/classes:${classPathOfJar} \
+    -H:+ReportUnsupportedElementsAtRuntime \
     -H:ReflectionConfigurationFiles=graalvm.reflections.json \
     -H:Path=target \
     -H:Name="pebuild" \

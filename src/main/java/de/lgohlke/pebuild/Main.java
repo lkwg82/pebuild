@@ -13,6 +13,9 @@ import java.nio.file.Paths;
 
 @Slf4j
 public class Main {
+
+    // TODO cli parser: https://github.com/remkop/picocli
+
     public static void main(String... args) {
         EnvironmentConfigurer.mergeEnvironmentAndSystemProperties();
 

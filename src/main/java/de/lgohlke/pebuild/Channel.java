@@ -2,36 +2,56 @@ package de.lgohlke.pebuild;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-class Channel<T> {
+class Channel<T> implements java.nio.channels.Channel {
 
-    private final BlockingQueue<T> channel = new LinkedTransferQueue<>();
     private final AtomicInteger consumers = new AtomicInteger();
-    private final AtomicInteger producers = new AtomicInteger();
+    private final AtomicBoolean open = new AtomicBoolean(true);
 
-    private final CountDownLatch numberOfProducers;
+    private final BlockingQueue<T> channel;
 
-    /**
-     * closes automatically when number of producers reached ZERO
-     */
-    Channel(int numberOfProducers) {
-        this.numberOfProducers = new CountDownLatch(numberOfProducers);
+    Channel(int bufferSize) {
+        if (bufferSize > 1) {
+            channel = new ArrayBlockingQueue<>(bufferSize);
+        } else {
+            channel = new SynchronousQueue<>();
+        }
     }
 
+    Channel() {
+        this(1);
+    }
+
+    @Override
     public boolean isOpen() {
-        return numberOfProducers.getCount() > 0;
+        return open.get();
     }
 
-    @Deprecated
+    @Override
     public void close() {
-        numberOfProducers.countDown();
+        log.debug("close channel");
+        open.set(false);
     }
+
+    public void send(T element) {
+        if (consumers.get() == 0) {
+            throw new NoConsumerException();
+        }
+
+        if (isOpen()) {
+            channel.offer(element);
+        } else {
+            throw new ChannelClosedException();
+        }
+    }
+
 
     public static class ChannelClosedException extends RuntimeException {
     }
@@ -43,10 +63,6 @@ class Channel<T> {
         return new Receiver();
     }
 
-    public Sender registerSender() {
-        return new Sender();
-    }
-
     public class Receiver implements AutoCloseable {
 
         private Receiver() {
@@ -55,7 +71,7 @@ class Channel<T> {
 
         public T receive() throws InterruptedException {
             log.debug("receiving");
-            while (isOpen()) {
+            while (isOpen() || channel.size() > 0) {
                 log.debug("try receive");
                 T item = channel.poll(10, TimeUnit.MILLISECONDS);
                 if (null != item) {
@@ -70,29 +86,6 @@ class Channel<T> {
         public void close() {
             log.debug("close receiver");
             consumers.decrementAndGet();
-        }
-    }
-
-    public class Sender implements AutoCloseable {
-        private Sender() {
-            producers.incrementAndGet();
-        }
-
-        public void send(T element) {
-            if (consumers.get() == 0) {
-                throw new NoConsumerException();
-            }
-
-            if (isOpen()) {
-                channel.offer(element);
-            }
-            throw new ChannelClosedException();
-        }
-
-        @Override
-        public void close() {
-            log.debug("close sender");
-            producers.decrementAndGet();
         }
     }
 }

@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 class CombinedStreamFascade {
-    private final Channel<String> combinedOutput = new Channel<>(2);
+    private final Channel<String> combinedOutput = new Channel<>();
     private final ExecutorService service = Executors.newFixedThreadPool(3);
 
     private final String jobName;
@@ -63,12 +63,10 @@ class CombinedStreamFascade {
     }
 
     private void captureStream(InputStream inputStream, String prefix) {
-        try (val sender = combinedOutput.registerSender()) {
-            try (val sc = new Scanner(inputStream)) {
-                log.debug("scanner started: {}", prefix);
-                while (sc.hasNextLine()) {
-                    sender.send(prefix + " " + sc.nextLine());
-                }
+        try (val sc = new Scanner(inputStream)) {
+            log.debug("scanner started: {}", prefix);
+            while (sc.hasNextLine()) {
+                combinedOutput.send(prefix + " " + sc.nextLine());
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);

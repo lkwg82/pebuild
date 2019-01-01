@@ -68,7 +68,8 @@ class ShellExecutorTest {
 
         shellExecutor.runCommand();
 
-        String content = new String(Files.readAllBytes(Paths.get(System.getProperty("user.dir"), "step.test.output")));
+        Path path = Paths.get(System.getProperty("user.dir"), "step.test.output");
+        String content = new String(Files.readAllBytes(path));
         assertThat(content).contains("hello out");
     }
 }

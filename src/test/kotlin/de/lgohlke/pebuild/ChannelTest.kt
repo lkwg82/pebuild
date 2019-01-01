@@ -15,7 +15,7 @@ class ChannelTest {
         }
     }
 
-    private val channel = Channel<String>(2)
+    private val channel = Channel<String>()
     private val service = Executors.newFixedThreadPool(10)
     private val received = LinkedTransferQueue<String>()
     private val receiver = Runnable {
@@ -26,20 +26,18 @@ class ChannelTest {
         }
     }
 
-
     @AfterEach
     internal fun tearDown() {
         service.awaitTermination(10, TimeUnit.MILLISECONDS)
     }
 
     @Test
-    fun `is open`() {
+    fun `should be open without any former registered sender`() {
         assertThat(channel.isOpen).isTrue()
     }
 
     @Test
     fun `is closed`() {
-        channel.close()
         channel.close()
 
         assertThat(channel.isOpen).isFalse()
@@ -49,50 +47,27 @@ class ChannelTest {
     fun `happy path`() {
         startReceiver()
 
-
-        oneTimeSender("hello")
-        oneTimeSender("world")
-
+        channel.send("hello")
         assertThat(received.take()).isEqualTo("hello")
+
+        channel.send("world")
         assertThat(received.take()).isEqualTo("world")
     }
 
     private fun startReceiver() {
         service.submit(receiver)
-        TimeUnit.MILLISECONDS.sleep(100)
-    }
-
-    private fun oneTimeSender(message: String) {
-        val sender = Runnable {
-            channel.registerSender().use {
-                it.send(message)
-            }
-        }
-        service.submit(sender)
-    }
-
-    @Test
-    fun `partial closed`() {
-        startReceiver()
-        oneTimeSender("hello")
-        channel.close()
-        oneTimeSender("world")
-
-
-        assertThat(received.take()).isEqualTo("hello")
-        assertThat(received.take()).isEqualTo("world")
+        TimeUnit.MILLISECONDS.sleep(10)
     }
 
     @Test
     fun `should not be able to send after closed`() {
         startReceiver()
 
-        oneTimeSender("hello")
-        channel.close()
+        channel.send("hello")
         channel.close()
 
         try {
-            channel.registerSender().send("world")
+            channel.send("world")
             fail("should fail")
         } catch (e: Channel.ChannelClosedException) {
             // ok
@@ -102,7 +77,7 @@ class ChannelTest {
     @Test
     fun `should not be able to send when there is no consumer`() {
         try {
-            channel.registerSender().send("hello")
+            channel.send("hello")
             fail("should fail when consumer is missing")
         } catch (e: Channel.NoConsumerException) {
             // ok

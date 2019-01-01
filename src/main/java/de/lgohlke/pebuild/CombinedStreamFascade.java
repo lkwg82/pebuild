@@ -11,23 +11,18 @@ import java.nio.file.Path;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TransferQueue;
 
 @RequiredArgsConstructor
 @Slf4j
 class CombinedStreamFascade {
-    private final TransferQueue<String> combinedOutput = new LinkedTransferQueue<>();
+    private final Channel<String> combinedOutput = new Channel<>(2);
+    private final ExecutorService service = Executors.newFixedThreadPool(3);
 
     private final String jobName;
     private final InputStream stdout;
     private final InputStream stderr;
     private final Path file;
-
-    private final static String MAGIC_END_STRING = "\0END\0";
-
-    private final ExecutorService service = Executors.newFixedThreadPool(3);
 
     void start() {
         service.submit(createRunnable(stderr, "STDERR"));
@@ -47,28 +42,17 @@ class CombinedStreamFascade {
         return () -> {
             log.debug("started consumer: {}", jobName);
             try (val f = new FileOutputStream(file.toFile())) {
-                int finishCounter = 0;
                 String line;
-                while (true) {
+                while (combinedOutput.isOpen()) {
                     try {
-                        line = combinedOutput.take();
+                        line = combinedOutput.receive();
                     } catch (InterruptedException e) {
                         log.error(e.getMessage(), e);
                         return;
                     }
 
-                    if (line.startsWith(MAGIC_END_STRING)) {
-                        finishCounter++;
-                        if (log.isDebugEnabled()) {
-                            log.debug("received end from {}", line.replaceFirst(MAGIC_END_STRING, ""));
-                        }
-                        if (2 == finishCounter) {
-                            return;
-                        }
-                    } else {
-                        System.out.println("[" + jobName + "] " + line);
-                        f.write((line + "\n").getBytes());
-                    }
+                    System.out.println("[" + jobName + "] " + line);
+                    f.write((line + "\n").getBytes());
                 }
             } catch (IOException e) {
                 log.error(e.getMessage(), e);
@@ -83,10 +67,11 @@ class CombinedStreamFascade {
             try (val sc = new Scanner(inputStream)) {
                 log.debug("scanner started: {}", prefix);
                 while (sc.hasNextLine()) {
-                    combinedOutput.offer(prefix + " " + sc.nextLine());
+                    combinedOutput.send(prefix + " " + sc.nextLine());
                 }
+            } finally {
                 log.debug("scanner finished: {}", prefix);
-                combinedOutput.offer(MAGIC_END_STRING + prefix);
+                combinedOutput.close();
             }
         };
     }

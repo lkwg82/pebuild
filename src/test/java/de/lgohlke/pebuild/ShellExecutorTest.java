@@ -54,9 +54,8 @@ class ShellExecutorTest {
     @BeforeEach
     void setUp() throws IOException {
         Path path = Files.createTempDirectory(new Random().nextInt() + "");
-        System.setProperty("user.dir",
-                           path.toAbsolutePath()
-                               .toString());
+        Configuration.REPORT_DIRECTORY.setIfMissing(path.toAbsolutePath()
+                                                        .toString());
     }
 
     @Test
@@ -68,7 +67,7 @@ class ShellExecutorTest {
 
         shellExecutor.runCommand();
 
-        Path path = Paths.get(System.getProperty("user.dir"), "step.test.output");
+        Path path = Paths.get(Configuration.REPORT_DIRECTORY.value(), "step.test.output");
         String content = new String(Files.readAllBytes(path));
         assertThat(content).contains("hello out");
     }

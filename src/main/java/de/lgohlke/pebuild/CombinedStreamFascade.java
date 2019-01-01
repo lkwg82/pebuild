@@ -15,7 +15,6 @@ import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TransferQueue;
 
-// TODO test
 @RequiredArgsConstructor
 @Slf4j
 class CombinedStreamFascade {

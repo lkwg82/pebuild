@@ -1,2 +1,6 @@
 language: java
 script: ./run.sh
+
+cache:
+  directories:
+  - $HOME/.m2

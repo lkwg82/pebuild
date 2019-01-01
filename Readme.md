@@ -11,6 +11,12 @@ simple powerfull parallel build execution tool
 - simplicity
 - robustness
 
+**motivation**
+
+Making the build fast and the configuration still very low in complexity.
+I dont want to the fine tune the concurrent steps. But I know what depends on what. 
+
+
 **features**
 - (TODO) yaml-like config file
 - (TODO) maximal parallel executions
@@ -32,3 +38,9 @@ steps:
   timeout: 10s
   waitfor: ['demo']
 ```
+
+**inspiration**
+
+- codeship (https://codeship.com)
+- gcloud build (https://cloud.google.com/cloud-build)
+- travisci (https://travis-ci.org)

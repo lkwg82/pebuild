@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/lkwg82/pebuild.svg?branch=master)](https://travis-ci.org/lkwg82/pebuild)
+
 # PEBuild
 
 Parallel Execution Build

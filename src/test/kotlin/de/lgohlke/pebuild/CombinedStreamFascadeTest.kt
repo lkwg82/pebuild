@@ -18,21 +18,17 @@ class CombinedStreamFascadeTest {
     private val path = Paths.get(tempDirectory.absolutePath, "step.output")
 
     private val oldSOUT = System.out
-    private val oldSERR = System.err
     private val newSOUT = ByteArrayOutputStream()
-    private val newSERR = ByteArrayOutputStream()
 
     @BeforeEach
     internal fun setUp() {
         System.setOut(PrintStream(newSOUT))
-        System.setErr(PrintStream(newSERR))
     }
 
     @AfterEach
     internal fun tearDown() {
         FileUtils.deleteDirectory(tempDirectory)
         System.setOut(PrintStream(oldSOUT))
-        System.setErr(PrintStream(oldSERR))
     }
 
     @Test
@@ -93,7 +89,7 @@ class CombinedStreamFascadeTest {
         val fascade = CombinedStreamFascade(jobName, stdout, stderr, path)
 
         fascade.start()
-        TimeUnit.MILLISECONDS.sleep(10)
+        TimeUnit.MILLISECONDS.sleep(10 * 10)
         fascade.stop()
     }
 }

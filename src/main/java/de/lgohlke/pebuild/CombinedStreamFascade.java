@@ -25,9 +25,9 @@ class CombinedStreamFascade {
     private final Path file;
 
     void start() {
-        service.submit(createRunnable(stderr, "STDERR"));
-        service.submit(createRunnable(stdout, "STDOUT"));
-        service.submit(printToFileAndOut(jobName));
+        service.submit(() -> printToFileAndOut(jobName));
+        service.submit(() -> captureStream(stderr, "STDERR"));
+        service.submit(() -> captureStream(stdout, "STDOUT"));
     }
 
     void stop() {
@@ -38,14 +38,14 @@ class CombinedStreamFascade {
         }
     }
 
-    private Runnable printToFileAndOut(String jobName) {
-        return () -> {
-            log.debug("started consumer: {}", jobName);
-            try (val f = new FileOutputStream(file.toFile())) {
+    private void printToFileAndOut(String jobName) {
+        log.debug("started consumer: {}", jobName);
+        try (val f = new FileOutputStream(file.toFile())) {
+            try (val receiver = combinedOutput.registerReceiver()) {
                 String line;
                 while (combinedOutput.isOpen()) {
                     try {
-                        line = combinedOutput.receive();
+                        line = receiver.receive();
                     } catch (InterruptedException e) {
                         log.error(e.getMessage(), e);
                         return;
@@ -54,25 +54,24 @@ class CombinedStreamFascade {
                     System.out.println("[" + jobName + "] " + line);
                     f.write((line + "\n").getBytes());
                 }
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-            } finally {
-                log.debug("finished consumer:{}", jobName);
             }
-        };
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        } finally {
+            log.debug("finished consumer:{}", jobName);
+        }
     }
 
-    private Runnable createRunnable(InputStream inputStream, String prefix) {
-        return () -> {
+    private void captureStream(InputStream inputStream, String prefix) {
+        try (val sender = combinedOutput.registerSender()) {
             try (val sc = new Scanner(inputStream)) {
                 log.debug("scanner started: {}", prefix);
                 while (sc.hasNextLine()) {
-                    combinedOutput.send(prefix + " " + sc.nextLine());
+                    sender.send(prefix + " " + sc.nextLine());
                 }
-            } finally {
-                log.debug("scanner finished: {}", prefix);
-                combinedOutput.close();
             }
-        };
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
     }
 }

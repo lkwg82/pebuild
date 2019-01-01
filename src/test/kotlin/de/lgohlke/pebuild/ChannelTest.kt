@@ -1,6 +1,7 @@
 package de.lgohlke.pebuild;
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.util.concurrent.Executors
@@ -8,13 +9,27 @@ import java.util.concurrent.LinkedTransferQueue
 import java.util.concurrent.TimeUnit
 
 class ChannelTest {
+    companion object {
+        init {
+            System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.pebuild.Channel", "DEBUG")
+        }
+    }
+
     private val channel = Channel<String>(2)
-    private val service = Executors.newFixedThreadPool(1)
+    private val service = Executors.newFixedThreadPool(10)
     private val received = LinkedTransferQueue<String>()
     private val receiver = Runnable {
-        while (true) {
-            received.put(channel.receive())
+        channel.registerReceiver().use { r ->
+            while (channel.isOpen) {
+                received.put(r.receive())
+            }
         }
+    }
+
+
+    @AfterEach
+    internal fun tearDown() {
+        service.awaitTermination(10, TimeUnit.MILLISECONDS)
     }
 
     @Test
@@ -34,8 +49,9 @@ class ChannelTest {
     fun `happy path`() {
         startReceiver()
 
-        channel.send("hello")
-        channel.send("world")
+
+        oneTimeSender("hello")
+        oneTimeSender("world")
 
         assertThat(received.take()).isEqualTo("hello")
         assertThat(received.take()).isEqualTo("world")
@@ -43,15 +59,25 @@ class ChannelTest {
 
     private fun startReceiver() {
         service.submit(receiver)
-        TimeUnit.MILLISECONDS.sleep(10)
+        TimeUnit.MILLISECONDS.sleep(100)
+    }
+
+    private fun oneTimeSender(message: String) {
+        val sender = Runnable {
+            channel.registerSender().use {
+                it.send(message)
+            }
+        }
+        service.submit(sender)
     }
 
     @Test
     fun `partial closed`() {
         startReceiver()
-        channel.send("hello")
+        oneTimeSender("hello")
         channel.close()
-        channel.send("world")
+        oneTimeSender("world")
+
 
         assertThat(received.take()).isEqualTo("hello")
         assertThat(received.take()).isEqualTo("world")
@@ -60,13 +86,13 @@ class ChannelTest {
     @Test
     fun `should not be able to send after closed`() {
         startReceiver()
-        
-        channel.send("hello")
+
+        oneTimeSender("hello")
         channel.close()
         channel.close()
 
         try {
-            channel.send("world")
+            channel.registerSender().send("world")
             fail("should fail")
         } catch (e: Channel.ChannelClosedException) {
             // ok
@@ -76,7 +102,7 @@ class ChannelTest {
     @Test
     fun `should not be able to send when there is no consumer`() {
         try {
-            channel.send("hello")
+            channel.registerSender().send("hello")
             fail("should fail when consumer is missing")
         } catch (e: Channel.NoConsumerException) {
             // ok

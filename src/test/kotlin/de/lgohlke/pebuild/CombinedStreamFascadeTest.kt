@@ -89,7 +89,7 @@ class CombinedStreamFascadeTest {
         val fascade = CombinedStreamFascade(jobName, stdout, stderr, path)
 
         fascade.start()
-        TimeUnit.MILLISECONDS.sleep(10 * 10)
+        TimeUnit.MILLISECONDS.sleep(10)
         fascade.stop()
     }
 }

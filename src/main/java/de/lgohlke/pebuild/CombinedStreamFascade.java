@@ -43,7 +43,7 @@ class CombinedStreamFascade {
         try (val f = new FileOutputStream(file.toFile())) {
             try (val receiver = combinedOutput.registerReceiver()) {
                 String line;
-                while (combinedOutput.isOpen()) {
+                while (receiver.isConsumable()) {
                     try {
                         line = receiver.receive();
                     } catch (InterruptedException e) {

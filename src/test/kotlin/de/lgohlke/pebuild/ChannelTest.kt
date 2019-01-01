@@ -20,7 +20,7 @@ class ChannelTest {
     private val received = LinkedTransferQueue<String>()
     private val receiver = Runnable {
         channel.registerReceiver().use { r ->
-            while (channel.isOpen) {
+            while (r.isConsumable) {
                 received.put(r.receive())
             }
         }
@@ -32,15 +32,15 @@ class ChannelTest {
     }
 
     @Test
-    fun `should be open without any former registered sender`() {
-        assertThat(channel.isOpen).isTrue()
+    fun `should be open`() {
+        assertThat(channel.isReadyForSend).isTrue()
     }
 
     @Test
     fun `is closed`() {
         channel.close()
 
-        assertThat(channel.isOpen).isFalse()
+        assertThat(channel.isReadyForSend).isFalse()
     }
 
     @Test
@@ -82,5 +82,29 @@ class ChannelTest {
         } catch (e: Channel.NoConsumerException) {
             // ok
         }
+    }
+
+    @Test
+    fun `should consume last item on slow receiver when sender closed already`() {
+        val receiver = Runnable {
+            channel.registerReceiver().use { r ->
+                while (r.isConsumable) {
+                    val receive = r.receive()
+                    TimeUnit.MILLISECONDS.sleep(50)
+                    println("received")
+                    received.put(receive)
+                }
+            }
+        }
+        service.submit(receiver)
+        TimeUnit.MILLISECONDS.sleep(10)
+
+        channel.send("hello1")
+        channel.send("hello2")
+        channel.close()
+
+        TimeUnit.MILLISECONDS.sleep(150)
+
+        assertThat(received.size).isEqualTo(2)
     }
 }

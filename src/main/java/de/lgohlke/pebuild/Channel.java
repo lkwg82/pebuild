@@ -4,13 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-class Channel<T> implements java.nio.channels.Channel {
+class Channel<T> {
 
     private final AtomicInteger consumers = new AtomicInteger();
     private final AtomicBoolean open = new AtomicBoolean(true);
@@ -18,35 +17,35 @@ class Channel<T> implements java.nio.channels.Channel {
     private final BlockingQueue<T> channel;
 
     Channel(int bufferSize) {
-        if (bufferSize > 1) {
-            channel = new ArrayBlockingQueue<>(bufferSize);
-        } else {
-            channel = new SynchronousQueue<>();
-        }
+        channel = new ArrayBlockingQueue<>(bufferSize);
     }
 
     Channel() {
         this(1);
     }
 
-    @Override
-    public boolean isOpen() {
-        return open.get();
-    }
-
-    @Override
     public void close() {
         log.debug("close channel");
         open.set(false);
     }
 
+    public boolean isReadyForSend() {
+        return open.get();
+    }
+
     public void send(T element) {
+        log.debug("try sending: {}", element);
         if (consumers.get() == 0) {
             throw new NoConsumerException();
         }
 
-        if (isOpen()) {
-            channel.offer(element);
+        if (isReadyForSend()) {
+            try {
+                channel.put(element);
+                log.debug("sent: {}", element);
+            } catch (InterruptedException e) {
+                log.debug("could not send: {} ({})", element, e.getMessage());
+            }
         } else {
             throw new ChannelClosedException();
         }
@@ -71,8 +70,7 @@ class Channel<T> implements java.nio.channels.Channel {
 
         public T receive() throws InterruptedException {
             log.debug("receiving");
-            while (isOpen() || channel.size() > 0) {
-                log.debug("try receive");
+            while (isConsumable()) {
                 T item = channel.poll(10, TimeUnit.MILLISECONDS);
                 if (null != item) {
                     log.debug("received:{}", item);
@@ -80,6 +78,14 @@ class Channel<T> implements java.nio.channels.Channel {
                 }
             }
             throw new InterruptedException("channel closed");
+        }
+
+        public boolean isConsumable() {
+            boolean isOpen = open.get();
+            boolean hasItem = !channel.isEmpty();
+            log.debug("try receive open: {}", hasItem);
+            log.debug("try receive has items: {}", isOpen);
+            return isOpen || hasItem;
         }
 
         @Override

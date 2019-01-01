@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-class Channel<T> implements AutoCloseable, java.nio.channels.Channel {
+class Channel<T> {
 
     private final BlockingQueue<T> channel = new LinkedTransferQueue<>();
     private final AtomicInteger consumers = new AtomicInteger();
@@ -24,12 +24,10 @@ class Channel<T> implements AutoCloseable, java.nio.channels.Channel {
         this.numberOfProducers = new CountDownLatch(numberOfProducers);
     }
 
-    @Override
     public boolean isOpen() {
         return numberOfProducers.getCount() > 0;
     }
 
-    @Override
     @Deprecated
     public void close() {
         numberOfProducers.countDown();
@@ -81,13 +79,14 @@ class Channel<T> implements AutoCloseable, java.nio.channels.Channel {
         }
 
         public void send(T element) {
-            if (!isOpen()) {
-                throw new ChannelClosedException();
-            }
             if (consumers.get() == 0) {
                 throw new NoConsumerException();
             }
-            channel.offer(element);
+
+            if (isOpen()) {
+                channel.offer(element);
+            }
+            throw new ChannelClosedException();
         }
 
         @Override

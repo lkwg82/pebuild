@@ -2,7 +2,7 @@
 
 set -ex
 
-#mvn clean verify
+mvn clean verify
 
 unamestr=`uname`
 if [[ ! -f .graalvm/graalvm-ce.tar.gz ]]; then

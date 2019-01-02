@@ -4,3 +4,11 @@ script: ./run.sh
 cache:
   directories:
   - $HOME/.m2
+  
+os:
+  - linux
+  - osx
+
+# fail fast: https://docs.travis-ci.com/user/customizing-the-build/#fast-finishing
+matrix:
+  fast_finish: true

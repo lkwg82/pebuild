@@ -2,7 +2,7 @@
 
 set -ex
 
-mvn clean verify
+#mvn clean verify
 
 unamestr=`uname`
 if [[ ! -f .graalvm/graalvm-ce.tar.gz ]]; then
@@ -18,10 +18,8 @@ if [[ ! -f .graalvm/graalvm-ce.tar.gz ]]; then
 fi
 
 if [[ "$unamestr" == 'Linux' ]]; then
-  url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc10/graalvm-ce-1.0.0-rc10-linux-amd64.tar.gz
   localGraalVMBin=$(find .graalvm/ -maxdepth 1 -type d | tail -1)
 elif [[ "$unamestr" == 'Darwin' ]]; then
-  url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc10/graalvm-ce-1.0.0-rc10-macos-amd64.tar.gz
   localGraalVMBin=$(find .graalvm/ -maxdepth 1 -type d | tail -1)/Contents/Home
 fi
 export PATH=$PWD/${localGraalVMBin}/bin:$PATH
@@ -31,23 +29,25 @@ sleep 3
 
 classPathOfJar=$(find target/classes/lib -type f| sort | xargs | tr ' ' ':')
 
-set -x
+# osx can not build static
 native-image \
+    $([[ "$unamestr" == 'Linux' ]] && echo -n "--static" || echo -n "") \
     --no-server \
-    --static \
     --class-path target/classes:${classPathOfJar} \
     -H:+ReportUnsupportedElementsAtRuntime \
     -H:ReflectionConfigurationFiles=graalvm.reflections.json \
     -H:Path=target \
     -H:Name="pebuild" \
     de.lgohlke.pebuild.Main
-set +x
-
 
 # only for release
 # upx -v target/pbuild
 
-/usr/bin/time -v ./target/pebuild date
+if [[ "$unamestr" == 'Linux' ]]; then
+  /usr/bin/time -v ./target/pebuild date
+elif [[ "$unamestr" == 'Darwin' ]]; then
+  /usr/bin/time -lp ./target/pebuild date
+fi
 
 if [[ $? == 0 ]]; then
     echo "build ok"

@@ -4,3 +4,7 @@ script: ./run.sh
 cache:
   directories:
   - $HOME/.m2
+  
+os:
+  - linux
+  - osx

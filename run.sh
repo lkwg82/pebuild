@@ -1,24 +1,29 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 mvn clean verify
 
+unamestr=`uname`
 if [[ ! -f .graalvm/graalvm-ce.tar.gz ]]; then
     mkdir -p .graalvm
-    unamestr=`uname`
     if [[ "$unamestr" == 'Linux' ]]; then
       url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc10/graalvm-ce-1.0.0-rc10-linux-amd64.tar.gz
-
     elif [[ "$unamestr" == 'Darwin' ]]; then
       url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc10/graalvm-ce-1.0.0-rc10-macos-amd64.tar.gz
-
     fi
 
     wget -O .graalvm/graalvm-ce.tar.gz ${url}
     tar -xzf .graalvm/graalvm-ce.tar.gz -C ./.graalvm
 fi
-localGraalVMBin=$(find .graalvm/ -maxdepth 1 -type d | tail -1)
+
+if [[ "$unamestr" == 'Linux' ]]; then
+  url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc10/graalvm-ce-1.0.0-rc10-linux-amd64.tar.gz
+  localGraalVMBin=$(find .graalvm/ -maxdepth 1 -type d | tail -1)
+elif [[ "$unamestr" == 'Darwin' ]]; then
+  url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc10/graalvm-ce-1.0.0-rc10-macos-amd64.tar.gz
+  localGraalVMBin=$(find .graalvm/ -maxdepth 1 -type d | tail -1)/Contents/Home
+fi
 export PATH=$PWD/${localGraalVMBin}/bin:$PATH
 
 # wait to not interfere with ide

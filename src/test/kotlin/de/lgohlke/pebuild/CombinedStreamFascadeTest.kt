@@ -86,10 +86,8 @@ class CombinedStreamFascadeTest {
     }
 
     private fun runFascade(jobName: String, stdout: ByteArrayInputStream, stderr: ByteArrayInputStream) {
-        val fascade = CombinedStreamFascade(jobName, stdout, stderr, path)
-
-        fascade.start()
-        TimeUnit.MILLISECONDS.sleep(10)
-        fascade.stop()
+        CombinedStreamFascade.create(jobName, stdout, stderr, path).use {
+            TimeUnit.MILLISECONDS.sleep(10)
+        }
     }
 }

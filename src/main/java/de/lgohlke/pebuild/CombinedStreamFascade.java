@@ -1,5 +1,6 @@
 package de.lgohlke.pebuild;
 
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -14,27 +15,40 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-@RequiredArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
-class CombinedStreamFascade {
+class CombinedStreamFascade implements AutoCloseable {
     private final Channel<String> combinedOutput = new Channel<>();
     private final ExecutorService service = Executors.newFixedThreadPool(3);
     private final CountDownLatch shutDownReceiver = new CountDownLatch(1);
     private final CountDownLatch receiverStarted = new CountDownLatch(1);
+    private final CountDownLatch senderAtLeastStarted = new CountDownLatch(2);
 
     private final String jobName;
     private final InputStream stdout;
     private final InputStream stderr;
     private final Path file;
 
+    static CombinedStreamFascade create(String name, InputStream inputStream, InputStream errorStream, Path outputFile) {
+        val fascade = new CombinedStreamFascade(name, inputStream, errorStream, outputFile);
+        fascade.start();
+        return fascade;
+    }
 
-    void start() {
+    private void start() {
         service.submit(() -> printToFileAndOut(jobName));
         service.submit(() -> captureStream(stderr, "STDERR"));
         service.submit(() -> captureStream(stdout, "STDOUT"));
     }
 
-    void stop() {
+    @Override
+    public void close() {
+        try {
+            senderAtLeastStarted.await();
+            TimeUnit.MILLISECONDS.sleep(10);
+        } catch (InterruptedException e) {
+            log.error(e.getMessage(), e);
+        }
         combinedOutput.close();
         shutDownReceiver.countDown();
 
@@ -101,6 +115,7 @@ class CombinedStreamFascade {
 
         try (val sc = new Scanner(inputStream)) {
             log.debug("scanner started: {}", prefix);
+            senderAtLeastStarted.countDown();
             while (sc.hasNextLine()) {
                 combinedOutput.send(prefix + " " + sc.nextLine());
             }

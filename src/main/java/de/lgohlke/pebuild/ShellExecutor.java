@@ -2,10 +2,10 @@ package de.lgohlke.pebuild;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -36,17 +36,15 @@ class ShellExecutor extends StepExecutor {
             Configuration.REPORT_DIRECTORY.setIfMissing(System.getProperty("user.dir"));
         }
 
-        Path outputFile = Paths.get(Configuration.REPORT_DIRECTORY.value(), filename);
-        CombinedStreamFascade streamFascade = new CombinedStreamFascade(getName(),
-                                                                        process.getInputStream(),
-                                                                        process.getErrorStream(),
-                                                                        outputFile);
-        streamFascade.start();
-        log.info("starting");
-        process.waitFor();
-        log.info("finished");
-        TimeUnit.MILLISECONDS.sleep(50);
-        streamFascade.stop();
+        val outputFile = Paths.get(Configuration.REPORT_DIRECTORY.value(), filename);
+        try (val ignored = CombinedStreamFascade.create(getName(),
+                                                        process.getInputStream(),
+                                                        process.getErrorStream(),
+                                                        outputFile)) {
+            log.info("starting");
+            process.waitFor();
+            log.info("finished");
+        }
     }
 
     @SneakyThrows

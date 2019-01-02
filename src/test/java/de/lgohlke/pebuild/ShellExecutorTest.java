@@ -21,7 +21,7 @@ class ShellExecutorTest {
 
         String output = ShellExecutor.execute(command);
 
-        assertThat(output).contains("HOME=/home");
+        assertThat(output).contains("HOME=/");
     }
 
     @Test

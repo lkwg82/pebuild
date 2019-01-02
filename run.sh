@@ -6,7 +6,16 @@ mvn clean verify
 
 if [[ ! -f .graalvm/graalvm-ce.tar.gz ]]; then
     mkdir -p .graalvm
-    wget -O .graalvm/graalvm-ce.tar.gz https://github.com/oracle/graal/releases/download/vm-1.0.0-rc10/graalvm-ce-1.0.0-rc10-linux-amd64.tar.gz
+    unamestr=`uname`
+    if [[ "$unamestr" == 'Linux' ]]; then
+      url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc10/graalvm-ce-1.0.0-rc10-linux-amd64.tar.gz
+
+    elif [[ "$unamestr" == 'Darwin' ]]; then
+      url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc10/graalvm-ce-1.0.0-rc10-macos-amd64.tar.gz
+
+    fi
+
+    wget -O .graalvm/graalvm-ce.tar.gz ${url}
     tar -xzf .graalvm/graalvm-ce.tar.gz -C ./.graalvm
 fi
 localGraalVMBin=$(find .graalvm/ -maxdepth 1 -type d | tail -1)

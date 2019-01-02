@@ -2,8 +2,10 @@ package de.lgohlke.pebuild;
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedTransferQueue
 import java.util.concurrent.TimeUnit
@@ -16,7 +18,7 @@ class ChannelTest {
     }
 
     private val channel = Channel<String>()
-    private val service = Executors.newFixedThreadPool(10)
+    private val service = Executors.newCachedThreadPool()
     private val received = LinkedTransferQueue<String>()
     private val receiver = Runnable {
         channel.registerReceiver().use { r ->
@@ -84,27 +86,32 @@ class ChannelTest {
         }
     }
 
-    @Test
+    //    @Test
+    @RepeatedTest(100)
     fun `should consume last item on slow receiver when sender closed already`() {
+        val receiverStarted = CountDownLatch(1)
+        val receiverFinished = CountDownLatch(1)
+
         val receiver = Runnable {
             channel.registerReceiver().use { r ->
                 while (r.isConsumable) {
+                    receiverStarted.countDown()
                     val receive = r.receive()
-                    TimeUnit.MILLISECONDS.sleep(50)
+                    TimeUnit.MILLISECONDS.sleep(10)
                     println("received")
                     received.put(receive)
                 }
+                receiverFinished.countDown()
             }
         }
         service.submit(receiver)
-        TimeUnit.MILLISECONDS.sleep(10)
 
+        receiverStarted.await()
         channel.send("hello1")
         channel.send("hello2")
         channel.close()
 
-        TimeUnit.MILLISECONDS.sleep(150)
-
+        receiverFinished.await()
         assertThat(received.size).isEqualTo(2)
     }
 }

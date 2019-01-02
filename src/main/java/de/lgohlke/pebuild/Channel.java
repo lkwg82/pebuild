@@ -2,8 +2,8 @@ package de.lgohlke.pebuild;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -12,16 +12,7 @@ class Channel<T> {
 
     private final AtomicInteger consumers = new AtomicInteger();
     private final AtomicBoolean open = new AtomicBoolean(true);
-
-    private final BlockingQueue<T> channel;
-
-    Channel(int bufferSize) {
-        channel = new ArrayBlockingQueue<>(bufferSize);
-    }
-
-    Channel() {
-        this(1);
-    }
+    private final BlockingQueue<T> channel = new SynchronousQueue<>();
 
     public void close() {
         log.debug("close channel");
@@ -69,12 +60,9 @@ class Channel<T> {
 
         public T receive() throws InterruptedException {
             log.debug("receiving");
-            while (isConsumable()) {
-                T item = channel.take();
-                log.debug("received:{}", item);
-                return item;
-            }
-            throw new InterruptedException("channel closed");
+            T item = channel.take();
+            log.debug("received:{}", item);
+            return item;
         }
 
         public boolean isConsumable() {

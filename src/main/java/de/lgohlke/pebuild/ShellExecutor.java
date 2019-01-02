@@ -1,6 +1,7 @@
 package de.lgohlke.pebuild;
 
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -9,6 +10,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 class ShellExecutor extends StepExecutor {
     ShellExecutor(String name, String command, Duration timeout, JobTrigger jobTrigger) {
         super(name, command, timeout, jobTrigger);
@@ -40,7 +42,10 @@ class ShellExecutor extends StepExecutor {
                                                                         process.getErrorStream(),
                                                                         outputFile);
         streamFascade.start();
+        log.info("starting");
         process.waitFor();
+        log.info("finished");
+        TimeUnit.MILLISECONDS.sleep(50);
         streamFascade.stop();
     }
 

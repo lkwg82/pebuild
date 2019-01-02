@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -71,11 +70,9 @@ class Channel<T> {
         public T receive() throws InterruptedException {
             log.debug("receiving");
             while (isConsumable()) {
-                T item = channel.poll(10, TimeUnit.MILLISECONDS);
-                if (null != item) {
-                    log.debug("received:{}", item);
-                    return item;
-                }
+                T item = channel.take();
+                log.debug("received:{}", item);
+                return item;
             }
             throw new InterruptedException("channel closed");
         }

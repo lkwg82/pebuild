@@ -20,8 +20,12 @@ public enum Configuration {
     public void setIfMissing(String value) {
         if (!System.getProperties()
                    .containsKey(fullName())) {
-            System.setProperty(fullName(), value);
+            overwrite(value);
         }
+    }
+
+    public void overwrite(String value) {
+        System.setProperty(fullName(), value);
     }
 
     public static void configureDefaults() {

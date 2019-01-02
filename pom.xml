@@ -94,6 +94,7 @@
                 <configuration>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <runOrder>random</runOrder>
+                    <parallel>all</parallel>
                 </configuration>
             </plugin>
             <plugin>
@@ -103,6 +104,7 @@
                 <configuration>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <runOrder>random</runOrder>
+                    <parallel>all</parallel>
                 </configuration>
                 <executions>
                     <execution>

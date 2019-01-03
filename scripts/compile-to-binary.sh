@@ -22,9 +22,6 @@ elif [[ "$unamestr" == 'Darwin' ]]; then
 fi
 export PATH=$PWD/${localGraalVMBin}/bin:$PATH
 
-# wait to not interfere with ide
-sleep 3
-
 classPathOfJar=$(find app/target/classes/lib -type f| sort | xargs | tr ' ' ':')
 mkdir -p target
 
@@ -34,7 +31,7 @@ native-image \
     --no-server \
     --class-path app/target/classes:${classPathOfJar} \
     -H:+ReportUnsupportedElementsAtRuntime \
-    -H:ReflectionConfigurationFiles=graalvm.reflections.json \
+    -H:ReflectionConfigurationFiles=lib.config/graalvm.reflections.json \
     -H:Path=target \
     -H:Name="pebuild" \
     de.lgohlke.pebuild.Main

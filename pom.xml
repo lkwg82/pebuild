@@ -8,6 +8,7 @@
     <artifactId>pbuild</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+
     <modules>
         <module>lib.config</module>
         <module>app</module>
@@ -145,11 +146,6 @@
             <groupId>info.picocli</groupId>
             <artifactId>picocli-codegen</artifactId>
             <version>3.8.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>1.23</version>
         </dependency>
 
         <dependency>

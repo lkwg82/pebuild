@@ -1,9 +1,0 @@
-steps:
-  - name: first
-    command: date
-  - name: second
-    command: echo hello world
-  - name: sleep
-    command: sleep 1
-    waitfor: ["first"]
-

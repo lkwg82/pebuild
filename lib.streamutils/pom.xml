@@ -2,21 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>pbuild</artifactId>
         <groupId>de.lgohlke.ci</groupId>
         <version>1.0-SNAPSHOT</version>
-        <relativePath>../</relativePath>
     </parent>
-    <artifactId>lib.config</artifactId>
+    <modelVersion>4.0.0</modelVersion>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>1.23</version>
-        </dependency>
-    </dependencies>
+    <artifactId>lib.streamutils</artifactId>
 
 </project>

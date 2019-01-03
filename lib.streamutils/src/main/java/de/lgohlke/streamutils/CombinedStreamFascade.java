@@ -1,4 +1,4 @@
-package de.lgohlke.pebuild;
+package de.lgohlke.streamutils;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
-class CombinedStreamFascade implements AutoCloseable {
+public class CombinedStreamFascade implements AutoCloseable {
     private final Channel<String> combinedOutput = new Channel<>();
     private final ExecutorService service = Executors.newFixedThreadPool(3);
     private final CountDownLatch shutDownReceiver = new CountDownLatch(1);
@@ -29,7 +29,7 @@ class CombinedStreamFascade implements AutoCloseable {
     private final InputStream stderr;
     private final Path file;
 
-    static CombinedStreamFascade create(String name, InputStream inputStream, InputStream errorStream, Path outputFile) {
+    public static CombinedStreamFascade create(String name, InputStream inputStream, InputStream errorStream, Path outputFile) {
         val fascade = new CombinedStreamFascade(name, inputStream, errorStream, outputFile);
         fascade.start();
         return fascade;

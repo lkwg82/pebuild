@@ -1,4 +1,4 @@
-package de.lgohlke.pebuild;
+package de.lgohlke.streamutils;
 
 import lombok.extern.slf4j.Slf4j;
 

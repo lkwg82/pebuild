@@ -1,4 +1,4 @@
-package de.lgohlke.pebuild
+package de.lgohlke.streamutils
 
 import org.apache.commons.io.FileUtils
 import org.assertj.core.api.Assertions.assertThat

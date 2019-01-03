@@ -11,6 +11,7 @@
 
     <modules>
         <module>lib.config</module>
+        <module>lib.streamutils</module>
         <module>app</module>
     </modules>
 

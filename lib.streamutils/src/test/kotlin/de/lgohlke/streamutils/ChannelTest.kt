@@ -1,4 +1,4 @@
-package de.lgohlke.pebuild;
+package de.lgohlke.streamutils
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach

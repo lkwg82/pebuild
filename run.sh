@@ -2,9 +2,5 @@
 
 set -ex
 
-mvn clean package -DskipTests
-
-scripts/compile-to-binary.sh &
-mvn verify &
-
-wait $(jobs -p)
+mvn clean verify
+scripts/compile-to-binary.sh

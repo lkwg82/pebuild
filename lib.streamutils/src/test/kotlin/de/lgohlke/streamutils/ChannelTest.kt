@@ -35,14 +35,14 @@ class ChannelTest {
 
     @Test
     fun `should be open`() {
-        assertThat(channel.isReadyForSend).isTrue()
+        assertThat(channel.isClosed).isFalse()
     }
 
     @Test
     fun `is closed`() {
         channel.close()
 
-        assertThat(channel.isReadyForSend).isFalse()
+        assertThat(channel.isClosed).isTrue()
     }
 
     @Test

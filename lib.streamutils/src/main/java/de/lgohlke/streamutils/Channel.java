@@ -19,8 +19,8 @@ class Channel<T> {
         open.set(false);
     }
 
-    public boolean isReadyForSend() {
-        return open.get();
+    public boolean isClosed() {
+        return !open.get();
     }
 
     public void send(T element) {
@@ -29,7 +29,7 @@ class Channel<T> {
             throw new NoConsumerException();
         }
 
-        if (!isReadyForSend()) {
+        if (isClosed()) {
             throw new ChannelClosedException();
         }
 

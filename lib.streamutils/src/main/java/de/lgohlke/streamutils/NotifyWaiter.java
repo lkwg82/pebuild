@@ -8,8 +8,14 @@ import java.util.concurrent.CountDownLatch;
 class NotifyWaiter {
     private final CountDownLatch receiverStopped = new CountDownLatch(1);
     private final CountDownLatch receiverStarted = new CountDownLatch(1);
-    private final CountDownLatch senderStarted = new CountDownLatch(2);
-    private final CountDownLatch senderStopped = new CountDownLatch(2);
+
+    private final CountDownLatch senderStarted;
+    private final CountDownLatch senderStopped;
+
+    NotifyWaiter(int numberOfSender) {
+        senderStarted = new CountDownLatch(numberOfSender);
+        senderStopped = new CountDownLatch(numberOfSender);
+    }
 
     void waitForReceiverStarted() {
         await(receiverStarted);

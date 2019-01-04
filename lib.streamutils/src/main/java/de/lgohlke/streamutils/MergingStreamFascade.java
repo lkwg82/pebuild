@@ -1,54 +1,80 @@
 package de.lgohlke.streamutils;
 
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
 public class MergingStreamFascade implements AutoCloseable {
-    private final Channel<String> combinedOutput = new Channel<>();
-    private final ExecutorService service = Executors.newFixedThreadPool(3);
+    private final Channel<String> channel = new Channel<>();
+    private final ExecutorService service;
 
-    private final NotifyWaiter notifyWaiter = new NotifyWaiter();
+    private final NotifyWaiter notifyWaiter;
     private final String jobName;
-    private final InputStream stdout;
-    private final InputStream stderr;
-    private final Path file;
+    private final PrintStream systemOut;
+    private final OutputStream[] outputStreams;
+    private final PrefixedInputStream[] inputStreams;
 
+    private MergingStreamFascade(String jobName,
+                                 PrefixedInputStream[] inputStreams,
+                                 PrintStream systemOut,
+                                 OutputStream[] outputStreams) {
+        this.jobName = jobName;
+        this.systemOut = systemOut;
+        this.outputStreams = outputStreams;
+        this.inputStreams = inputStreams;
+
+        this.notifyWaiter = new NotifyWaiter(inputStreams.length);
+        this.service = Executors.newFixedThreadPool(1 + inputStreams.length);
+    }
+
+    @Deprecated
     public static MergingStreamFascade create(String name,
                                               InputStream inputStream,
                                               InputStream errorStream,
-                                              Path outputFile) {
-        val fascade = new MergingStreamFascade(name, inputStream, errorStream, outputFile);
+                                              OutputStream outputStream) {
+
+        return create(name,
+                      new PrefixedInputStream[]{
+                              new PrefixedInputStream(inputStream, "STDOUT"),
+                              new PrefixedInputStream(errorStream, "STDERR")},
+                      System.out,
+                      new OutputStream[]{outputStream});
+    }
+
+    public static MergingStreamFascade create(String name,
+                                              PrefixedInputStream[] inputStreams,
+                                              PrintStream systemOut,
+                                              OutputStream[] outputStreams) {
+
+        val fascade = new MergingStreamFascade(name, inputStreams, systemOut, outputStreams);
         fascade.start();
         return fascade;
     }
 
     private void start() {
         service.submit(() -> printToFileAndOut(jobName));
-        service.submit(() -> captureStream(stderr, "STDERR"));
-        service.submit(() -> captureStream(stdout, "STDOUT"));
+        for (final PrefixedInputStream inputStream : inputStreams) {
+            service.submit(() -> captureStream(inputStream));
+        }
     }
 
-    private void captureStream(InputStream inputStream, String prefix) {
-        new DecoratingStreamer(inputStream, prefix, combinedOutput, notifyWaiter).capture();
+    private void captureStream(PrefixedInputStream prefixedInputStream) {
+        new DecoratingStreamer(prefixedInputStream, channel, notifyWaiter).capture();
     }
 
     @Override
     public void close() {
         notifyWaiter.waitForSenderStarted();
         notifyWaiter.waitForSenderStopped();
-        combinedOutput.close();
+        channel.close();
         notifyWaiter.notifyReceiverStopped();
 
         try {
@@ -63,30 +89,29 @@ public class MergingStreamFascade implements AutoCloseable {
         log.debug("started consumer: {}", jobName);
 
         Runnable receiverRun = () -> {
-            try (val f = new FileOutputStream(file.toFile())) {
-                try (val receiver = combinedOutput.registerReceiver()) {
-                    notifyWaiter.notifyReceiverStarted();
-                    String line;
-                    while (receiver.isConsumable()) {
-                        try {
-                            line = receiver.receive();
-                        } catch (InterruptedException e) {
-                            log.error(e.getMessage(), e);
-                            Thread.currentThread().interrupt();
-                            return;
-                        }
+            try (val receiver = channel.registerReceiver()) {
+                notifyWaiter.notifyReceiverStarted();
+                String line;
+                while (receiver.isConsumable()) {
+                    try {
+                        line = receiver.receive();
+                    } catch (InterruptedException e) {
+                        log.error(e.getMessage(), e);
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
 
-                        System.out.println("[" + jobName + "] " + line);
+                    systemOut.println("[" + jobName + "] " + line);
+                    for (val out : outputStreams) {
                         try {
-                            f.write((line + "\n").getBytes());
+                            out.write((line + "\n").getBytes());
                         } catch (IOException e) {
                             log.error(e.getMessage(), e);
                         }
                     }
                 }
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
             }
+
         };
 
         val threadExecutor = Executors.newSingleThreadScheduledExecutor();

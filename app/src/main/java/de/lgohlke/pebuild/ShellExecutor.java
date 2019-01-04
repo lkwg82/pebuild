@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -22,8 +23,8 @@ class ShellExecutor extends StepExecutor {
         ProcessBuilder processBuilder = createWrappedInShell(command);
 
         processBuilder.inheritIO()
-                      .start()
-                      .waitFor();
+                .start()
+                .waitFor();
     }
 
     @Override
@@ -32,19 +33,20 @@ class ShellExecutor extends StepExecutor {
 
         String filename = "step." + getName() + ".output";
 
-        if (Configuration.REPORT_DIRECTORY.value()
-                                          .isEmpty()) {
+        if (Configuration.REPORT_DIRECTORY.value().isEmpty()) {
             Configuration.REPORT_DIRECTORY.setIfMissing(System.getProperty("user.dir"));
         }
 
         val outputFile = Paths.get(Configuration.REPORT_DIRECTORY.value(), filename);
-        try (val ignored = MergingStreamFascade.create(getName(),
-                                                       process.getInputStream(),
-                                                       process.getErrorStream(),
-                                                       outputFile)) {
-            log.info("starting");
-            process.waitFor();
-            log.info("finished");
+        try (val fout = new FileOutputStream(outputFile.toFile())) {
+            try (val ignored = MergingStreamFascade.create(getName(),
+                                                           process.getInputStream(),
+                                                           process.getErrorStream(),
+                                                           fout)) {
+                log.info("starting");
+                process.waitFor();
+                log.info("finished");
+            }
         }
     }
 

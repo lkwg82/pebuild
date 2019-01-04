@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.FileOutputStream
 import java.io.PrintStream
 import java.nio.charset.Charset
 import java.nio.file.Paths
@@ -91,8 +92,10 @@ class MergingStreamFascadeTest {
     }
 
     private fun runFascade(jobName: String, stdout: ByteArrayInputStream, stderr: ByteArrayInputStream) {
-        MergingStreamFascade.create(jobName, stdout, stderr, path).use {
-            //   do something
+        FileOutputStream(path.toFile()).use { fout ->
+            MergingStreamFascade.create(jobName, stdout, stderr, fout).use {
+                //   do something
+            }
         }
     }
 }

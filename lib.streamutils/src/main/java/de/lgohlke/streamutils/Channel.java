@@ -29,18 +29,18 @@ class Channel<T> {
             throw new NoConsumerException();
         }
 
-        if (isReadyForSend()) {
-            try {
-                channel.put(element);
-                log.debug("sent: {}", element);
-            } catch (InterruptedException e) {
-                log.debug("could not send: {} ({})", element, e.getMessage());
-            }
-        } else {
+        if (!isReadyForSend()) {
             throw new ChannelClosedException();
         }
-    }
 
+        try {
+            channel.put(element);
+            log.debug("sent: {}", element);
+        } catch (InterruptedException e) {
+            log.debug("could not send: {} ({})", element, e.getMessage());
+            Thread.currentThread().interrupt();
+        }
+    }
 
     public static class ChannelClosedException extends RuntimeException {
     }

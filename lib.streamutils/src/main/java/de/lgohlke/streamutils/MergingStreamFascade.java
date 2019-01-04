@@ -4,13 +4,17 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * reads from many InputStreams and write them to
+ * - a PrintStream (mostly System.out)
+ * - and many other OutputStreams
+ */
 @Slf4j
 public class MergingStreamFascade implements AutoCloseable {
     private final Channel<String> channel = new Channel<>();
@@ -35,20 +39,6 @@ public class MergingStreamFascade implements AutoCloseable {
         this.service = Executors.newFixedThreadPool(1 + inputStreams.length);
     }
 
-    @Deprecated
-    public static MergingStreamFascade create(String name,
-                                              InputStream inputStream,
-                                              InputStream errorStream,
-                                              OutputStream outputStream) {
-
-        return create(name,
-                      new PrefixedInputStream[]{
-                              new PrefixedInputStream(inputStream, "STDOUT"),
-                              new PrefixedInputStream(errorStream, "STDERR")},
-                      System.out,
-                      new OutputStream[]{outputStream});
-    }
-
     public static MergingStreamFascade create(String name,
                                               PrefixedInputStream[] inputStreams,
                                               PrintStream systemOut,
@@ -60,14 +50,15 @@ public class MergingStreamFascade implements AutoCloseable {
     }
 
     private void start() {
-        service.submit(() -> printToFileAndOut(jobName));
+        service.submit(() -> receiver(jobName));
+
         for (final PrefixedInputStream inputStream : inputStreams) {
-            service.submit(() -> captureStream(inputStream));
+            service.submit(() -> sender(inputStream));
         }
     }
 
-    private void captureStream(PrefixedInputStream prefixedInputStream) {
-        new DecoratingStreamer(prefixedInputStream, channel, notifyWaiter).capture();
+    private void sender(PrefixedInputStream inputStream) {
+        new DecoratingStreamer(inputStream, channel, notifyWaiter).capture();
     }
 
     @Override
@@ -85,7 +76,7 @@ public class MergingStreamFascade implements AutoCloseable {
         }
     }
 
-    private void printToFileAndOut(String jobName) {
+    private void receiver(String jobName) {
         log.debug("started consumer: {}", jobName);
 
         Runnable receiverRun = () -> {

@@ -7,6 +7,7 @@ import java.io.InputStream;
 
 @RequiredArgsConstructor
 @Getter
+public
 class PrefixedInputStream {
     private final InputStream stream;
     private final String prefix;

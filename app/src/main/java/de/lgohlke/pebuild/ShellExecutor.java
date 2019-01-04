@@ -1,6 +1,7 @@
 package de.lgohlke.pebuild;
 
 import de.lgohlke.streamutils.MergingStreamFascade;
+import de.lgohlke.streamutils.PrefixedInputStream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -8,6 +9,7 @@ import lombok.val;
 import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -39,10 +41,13 @@ class ShellExecutor extends StepExecutor {
 
         val outputFile = Paths.get(Configuration.REPORT_DIRECTORY.value(), filename);
         try (val fout = new FileOutputStream(outputFile.toFile())) {
-            try (val ignored = MergingStreamFascade.create(getName(),
-                                                           process.getInputStream(),
-                                                           process.getErrorStream(),
-                                                           fout)) {
+            PrefixedInputStream stdout = new PrefixedInputStream(process.getInputStream(), "STDOUT");
+            PrefixedInputStream stderr = new PrefixedInputStream(process.getErrorStream(), "STDERR");
+
+            PrefixedInputStream[] inputStreams = {stdout, stderr};
+            OutputStream[] outputStreams = {fout};
+
+            try (val ignored = MergingStreamFascade.create(getName(), inputStreams, System.out, outputStreams)) {
                 log.info("starting");
                 process.waitFor();
                 log.info("finished");

@@ -1,17 +1,12 @@
 package de.lgohlke.streamutils
 
-import org.apache.commons.io.FileUtils
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.util.Files
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.io.FileOutputStream
+import java.io.OutputStream
 import java.io.PrintStream
-import java.nio.charset.Charset
-import java.nio.file.Paths
+
 
 class MergingStreamFascadeTest {
     companion object {
@@ -20,82 +15,59 @@ class MergingStreamFascadeTest {
         }
     }
 
-    private val tempDirectory = Files.newTemporaryFolder()
-    private val path = Paths.get(tempDirectory.absolutePath, "step.output")
-
-    private val oldSOUT = System.out
-    private val newSOUT = ByteArrayOutputStream()
-
-    @BeforeEach
-    internal fun setUp() {
-        System.setOut(PrintStream(newSOUT))
-    }
-
-    @AfterEach
-    internal fun tearDown() {
-        FileUtils.deleteDirectory(tempDirectory)
-        System.setOut(PrintStream(oldSOUT))
-    }
-
-    @RepeatedTest(100)
-    fun `should create step output file`() {
-        val stdout = ByteArrayInputStream("".toByteArray())
-        val stderr = ByteArrayInputStream("".toByteArray())
-
-        runFascade("test", stdout, stderr)
-
-        assertThat(path).exists()
-    }
+    private val stdoutIntern = ByteArrayOutputStream()
+    private val stdout = PrintStream(stdoutIntern, true)
+    private val fileOutputStream = ByteArrayOutputStream()
 
     @RepeatedTest(100)
     fun `should have STDOUT output collected in file`() {
-        val stdout = ByteArrayInputStream("ok".toByteArray())
-        val stderr = ByteArrayInputStream("".toByteArray())
+        val inputStreams = createInputStreams("ok", "")
 
-        runFascade("test", stdout, stderr)
+        runFascade("test", inputStreams, stdout, fileOutputStream)
 
-        val content = FileUtils.readFileToString(path.toFile(), Charset.defaultCharset())
+        val content = String(fileOutputStream.toByteArray())
         assertThat(content).contains("STDOUT ok")
     }
 
     @RepeatedTest(100)
     fun `should have STDOUT output printed to System out`() {
-        val stdout = ByteArrayInputStream("ok".toByteArray())
-        val stderr = ByteArrayInputStream("".toByteArray())
+        val inputStreams = createInputStreams("ok", "")
 
-        runFascade("test", stdout, stderr)
+        runFascade("test", inputStreams, stdout)
 
-        val content = newSOUT.toByteArray().toString(Charset.defaultCharset())
+        val content = String(stdoutIntern.toByteArray())
         assertThat(content).contains("[test] STDOUT ok")
     }
 
     @RepeatedTest(100)
-    fun `should have STDERR output printed to System out`() {
-        val stdout = ByteArrayInputStream("".toByteArray())
-        val stderr = ByteArrayInputStream("err".toByteArray())
+    fun `should have STDERR output printed to SystemOut`() {
+        val inputStreams = createInputStreams("", "err")
 
-        runFascade("test", stdout, stderr)
+        runFascade("test", inputStreams, stdout)
 
-        val content = newSOUT.toByteArray().toString(Charset.defaultCharset())
+        val content = String(stdoutIntern.toByteArray())
         assertThat(content).contains("[test] STDERR err")
     }
 
     @RepeatedTest(100)
-    fun `should have STDERR output collected in file`() {
-        val stdout = ByteArrayInputStream("".toByteArray())
-        val stderr = ByteArrayInputStream("err".toByteArray())
+    fun `should have STDERR output collected in filestream`() {
+        val inputStreams = createInputStreams("", "err")
 
-        runFascade("test", stdout, stderr)
+        runFascade("test", inputStreams, stdout, fileOutputStream)
 
-        val content = FileUtils.readFileToString(path.toFile(), Charset.defaultCharset())
+        val content = String(fileOutputStream.toByteArray())
         assertThat(content).contains("STDERR err")
     }
 
-    private fun runFascade(jobName: String, stdout: ByteArrayInputStream, stderr: ByteArrayInputStream) {
-        FileOutputStream(path.toFile()).use { fout ->
-            MergingStreamFascade.create(jobName, stdout, stderr, fout).use {
-                //   do something
-            }
+    private fun createInputStreams(stdout: String, stderr: String): Array<PrefixedInputStream> {
+        val out = PrefixedInputStream(ByteArrayInputStream(stdout.toByteArray()), "STDOUT")
+        val err = PrefixedInputStream(ByteArrayInputStream(stderr.toByteArray()), "STDERR")
+        return arrayOf(out, err)
+    }
+
+    private fun runFascade(jobName: String, inputStreams: Array<PrefixedInputStream>, stdout: PrintStream, vararg outputStreams: OutputStream) {
+        MergingStreamFascade.create(jobName, inputStreams, stdout, outputStreams).use {
+            //   do something
         }
     }
 }

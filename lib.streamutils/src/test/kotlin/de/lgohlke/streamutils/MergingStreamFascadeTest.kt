@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
+import java.util.concurrent.TimeUnit
 
 
 class MergingStreamFascadeTest {
@@ -24,7 +25,7 @@ class MergingStreamFascadeTest {
         val inputStreams = createInputStreams("ok", "")
 
         MergingStreamFascade.create("test", inputStreams, stdout, arrayOf<OutputStream>(fileOutputStream)).use {
-            //   do something
+            doSomeThing()
         }
 
         val content = String(fileOutputStream.toByteArray())
@@ -36,7 +37,7 @@ class MergingStreamFascadeTest {
         val inputStreams = createInputStreams("ok", "")
 
         MergingStreamFascade.create("test", inputStreams, stdout, arrayOf()).use {
-            //   do something
+            doSomeThing()
         }
 
         val content = String(stdoutIntern.toByteArray())
@@ -48,11 +49,15 @@ class MergingStreamFascadeTest {
         val inputStreams = createInputStreams("", "err")
 
         MergingStreamFascade.create("test", inputStreams, stdout, arrayOf()).use {
-            //   do something
+            doSomeThing()
         }
 
         val content = String(stdoutIntern.toByteArray())
         assertThat(content).contains("[test] STDERR err")
+    }
+
+    private fun doSomeThing() {
+        TimeUnit.MILLISECONDS.sleep(50);
     }
 
     @RepeatedTest(100)
@@ -60,7 +65,7 @@ class MergingStreamFascadeTest {
         val inputStreams = createInputStreams("", "err")
 
         MergingStreamFascade.create("test", inputStreams, stdout, arrayOf<OutputStream>(fileOutputStream)).use {
-            //   do something
+            doSomeThing()
         }
 
         val content = String(fileOutputStream.toByteArray())

@@ -5,15 +5,20 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.util.Files
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.RepeatedTest
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.charset.Charset
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 
 class CombinedStreamFascadeTest {
+    companion object {
+        init {
+            System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.CombinedStreamFascade", "DEBUG")
+        }
+    }
+
     private val tempDirectory = Files.newTemporaryFolder()
     private val path = Paths.get(tempDirectory.absolutePath, "step.output")
 
@@ -31,7 +36,7 @@ class CombinedStreamFascadeTest {
         System.setOut(PrintStream(oldSOUT))
     }
 
-    @Test
+    @RepeatedTest(100)
     fun `should create step output file`() {
         val stdout = ByteArrayInputStream("".toByteArray())
         val stderr = ByteArrayInputStream("".toByteArray())
@@ -41,7 +46,7 @@ class CombinedStreamFascadeTest {
         assertThat(path).exists()
     }
 
-    @Test
+    @RepeatedTest(100)
     fun `should have STDOUT output collected in file`() {
         val stdout = ByteArrayInputStream("ok".toByteArray())
         val stderr = ByteArrayInputStream("".toByteArray())
@@ -52,7 +57,7 @@ class CombinedStreamFascadeTest {
         assertThat(content).contains("STDOUT ok")
     }
 
-    @Test
+    @RepeatedTest(100)
     fun `should have STDOUT output printed to System out`() {
         val stdout = ByteArrayInputStream("ok".toByteArray())
         val stderr = ByteArrayInputStream("".toByteArray())
@@ -63,7 +68,7 @@ class CombinedStreamFascadeTest {
         assertThat(content).contains("[test] STDOUT ok")
     }
 
-    @Test
+    @RepeatedTest(100)
     fun `should have STDERR output printed to System out`() {
         val stdout = ByteArrayInputStream("".toByteArray())
         val stderr = ByteArrayInputStream("err".toByteArray())
@@ -74,7 +79,7 @@ class CombinedStreamFascadeTest {
         assertThat(content).contains("[test] STDERR err")
     }
 
-    @Test
+    @RepeatedTest(100)
     fun `should have STDERR output collected in file`() {
         val stdout = ByteArrayInputStream("".toByteArray())
         val stderr = ByteArrayInputStream("err".toByteArray())
@@ -87,7 +92,7 @@ class CombinedStreamFascadeTest {
 
     private fun runFascade(jobName: String, stdout: ByteArrayInputStream, stderr: ByteArrayInputStream) {
         CombinedStreamFascade.create(jobName, stdout, stderr, path).use {
-            TimeUnit.MILLISECONDS.sleep(10)
+            //   do something
         }
     }
 }

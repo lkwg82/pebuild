@@ -23,6 +23,7 @@ public class CombinedStreamFascade implements AutoCloseable {
     private final CountDownLatch shutDownReceiver = new CountDownLatch(1);
     private final CountDownLatch receiverStarted = new CountDownLatch(1);
     private final CountDownLatch senderAtLeastStarted = new CountDownLatch(2);
+    private final CountDownLatch senderAtLeastStopped = new CountDownLatch(2);
 
     private final String jobName;
     private final InputStream stdout;
@@ -45,7 +46,7 @@ public class CombinedStreamFascade implements AutoCloseable {
     public void close() {
         try {
             senderAtLeastStarted.await();
-            TimeUnit.MILLISECONDS.sleep(10);
+            senderAtLeastStopped.await();
         } catch (InterruptedException e) {
             log.error(e.getMessage(), e);
         }
@@ -120,6 +121,7 @@ public class CombinedStreamFascade implements AutoCloseable {
                 combinedOutput.send(prefix + " " + sc.nextLine());
             }
             log.debug("scanner closed: {}", prefix);
+            senderAtLeastStopped.countDown();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }

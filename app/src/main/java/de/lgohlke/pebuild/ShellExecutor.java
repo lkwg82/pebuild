@@ -1,6 +1,6 @@
 package de.lgohlke.pebuild;
 
-import de.lgohlke.streamutils.CombinedStreamFascade;
+import de.lgohlke.streamutils.MergingStreamFascade;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -38,10 +38,10 @@ class ShellExecutor extends StepExecutor {
         }
 
         val outputFile = Paths.get(Configuration.REPORT_DIRECTORY.value(), filename);
-        try (val ignored = CombinedStreamFascade.create(getName(),
-                                                        process.getInputStream(),
-                                                        process.getErrorStream(),
-                                                        outputFile)) {
+        try (val ignored = MergingStreamFascade.create(getName(),
+                                                       process.getInputStream(),
+                                                       process.getErrorStream(),
+                                                       outputFile)) {
             log.info("starting");
             process.waitFor();
             log.info("finished");

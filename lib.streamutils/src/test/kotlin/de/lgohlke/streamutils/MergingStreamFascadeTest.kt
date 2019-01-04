@@ -12,10 +12,10 @@ import java.io.PrintStream
 import java.nio.charset.Charset
 import java.nio.file.Paths
 
-class CombinedStreamFascadeTest {
+class MergingStreamFascadeTest {
     companion object {
         init {
-            System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.CombinedStreamFascade", "DEBUG")
+            System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.MergingStreamFascade", "DEBUG")
         }
     }
 
@@ -91,7 +91,7 @@ class CombinedStreamFascadeTest {
     }
 
     private fun runFascade(jobName: String, stdout: ByteArrayInputStream, stderr: ByteArrayInputStream) {
-        CombinedStreamFascade.create(jobName, stdout, stderr, path).use {
+        MergingStreamFascade.create(jobName, stdout, stderr, path).use {
             //   do something
         }
     }

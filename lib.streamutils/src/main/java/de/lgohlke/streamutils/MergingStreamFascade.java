@@ -9,29 +9,27 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.Scanner;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
-public class CombinedStreamFascade implements AutoCloseable {
+public class MergingStreamFascade implements AutoCloseable {
     private final Channel<String> combinedOutput = new Channel<>();
     private final ExecutorService service = Executors.newFixedThreadPool(3);
-    private final CountDownLatch shutDownReceiver = new CountDownLatch(1);
-    private final CountDownLatch receiverStarted = new CountDownLatch(1);
-    private final CountDownLatch senderAtLeastStarted = new CountDownLatch(2);
-    private final CountDownLatch senderAtLeastStopped = new CountDownLatch(2);
 
+    private final NotifyWaiter notifyWaiter = new NotifyWaiter();
     private final String jobName;
     private final InputStream stdout;
     private final InputStream stderr;
     private final Path file;
 
-    public static CombinedStreamFascade create(String name, InputStream inputStream, InputStream errorStream, Path outputFile) {
-        val fascade = new CombinedStreamFascade(name, inputStream, errorStream, outputFile);
+    public static MergingStreamFascade create(String name,
+                                              InputStream inputStream,
+                                              InputStream errorStream,
+                                              Path outputFile) {
+        val fascade = new MergingStreamFascade(name, inputStream, errorStream, outputFile);
         fascade.start();
         return fascade;
     }
@@ -42,21 +40,22 @@ public class CombinedStreamFascade implements AutoCloseable {
         service.submit(() -> captureStream(stdout, "STDOUT"));
     }
 
+    private void captureStream(InputStream inputStream, String prefix) {
+        new DecoratingStreamer(inputStream, prefix, combinedOutput, notifyWaiter).capture();
+    }
+
     @Override
     public void close() {
-        try {
-            senderAtLeastStarted.await();
-            senderAtLeastStopped.await();
-        } catch (InterruptedException e) {
-            log.error(e.getMessage(), e);
-        }
+        notifyWaiter.waitForSenderStarted();
+        notifyWaiter.waitForSenderStopped();
         combinedOutput.close();
-        shutDownReceiver.countDown();
+        notifyWaiter.notifyReceiverStopped();
 
         try {
             service.awaitTermination(1, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -66,13 +65,14 @@ public class CombinedStreamFascade implements AutoCloseable {
         Runnable receiverRun = () -> {
             try (val f = new FileOutputStream(file.toFile())) {
                 try (val receiver = combinedOutput.registerReceiver()) {
-                    receiverStarted.countDown();
+                    notifyWaiter.notifyReceiverStarted();
                     String line;
                     while (receiver.isConsumable()) {
                         try {
                             line = receiver.receive();
                         } catch (InterruptedException e) {
                             log.error(e.getMessage(), e);
+                            Thread.currentThread().interrupt();
                             return;
                         }
 
@@ -92,38 +92,14 @@ public class CombinedStreamFascade implements AutoCloseable {
         val threadExecutor = Executors.newSingleThreadScheduledExecutor();
         threadExecutor.submit(receiverRun);
 
+        notifyWaiter.waitForReceiverStopped();
         try {
-            shutDownReceiver.await();
+            threadExecutor.awaitTermination(1, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             log.error(e.getMessage(), e);
-        } finally {
-            try {
-                threadExecutor.awaitTermination(1, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                log.error(e.getMessage(), e);
-            }
+            Thread.currentThread().interrupt();
         }
 
         log.debug("finished consumer:{}", jobName);
-    }
-
-    private void captureStream(InputStream inputStream, String prefix) {
-        try {
-            receiverStarted.await();
-        } catch (InterruptedException e) {
-            log.error(e.getMessage(), e);
-        }
-
-        try (val sc = new Scanner(inputStream)) {
-            log.debug("scanner started: {}", prefix);
-            senderAtLeastStarted.countDown();
-            while (sc.hasNextLine()) {
-                combinedOutput.send(prefix + " " + sc.nextLine());
-            }
-            log.debug("scanner closed: {}", prefix);
-            senderAtLeastStopped.countDown();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
     }
 }

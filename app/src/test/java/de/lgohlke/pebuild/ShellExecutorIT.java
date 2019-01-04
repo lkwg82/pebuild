@@ -18,7 +18,7 @@ class ShellExecutorIT {
 
     static {
         System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.pebuild.Channel", "DEBUG");
-        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.pebuild.CombinedStreamFascade", "DEBUG");
+        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.pebuild.MergingStreamFascade", "DEBUG");
     }
 
     private Path tempDirectory;

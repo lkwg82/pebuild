@@ -53,8 +53,8 @@ class ShellExecutor extends StepExecutor {
                 log.info("finished");
             }
 
-            fout.close();
-            TimeUnit.MILLISECONDS.sleep(100); // let filesystem flush, before we try to read it
+            fout.flush();
+            fout.getFD().sync();
         }
     }
 

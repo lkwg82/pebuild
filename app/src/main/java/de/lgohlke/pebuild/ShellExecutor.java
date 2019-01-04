@@ -52,6 +52,9 @@ class ShellExecutor extends StepExecutor {
                 process.waitFor();
                 log.info("finished");
             }
+
+            fout.close();
+            TimeUnit.MILLISECONDS.sleep(100); // let filesystem flush, before we try to read it
         }
     }
 

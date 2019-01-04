@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,8 +43,6 @@ class ShellExecutorIT {
                                                         new JobTrigger("test"));
 
         shellExecutor.runCommand();
-
-        TimeUnit.MILLISECONDS.sleep(100); // let filesystem flush, before we try to read it
 
         Path output = Paths.get(Configuration.REPORT_DIRECTORY.value(), "step.test.output");
         String content = new String(Files.readAllBytes(output));

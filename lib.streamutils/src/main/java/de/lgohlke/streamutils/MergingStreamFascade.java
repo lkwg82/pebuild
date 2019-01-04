@@ -1,5 +1,6 @@
 package de.lgohlke.streamutils;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
@@ -39,11 +40,10 @@ public class MergingStreamFascade implements AutoCloseable {
         this.service = Executors.newFixedThreadPool(1 + inputStreams.length);
     }
 
-    public static MergingStreamFascade create(String name,
-                                              PrefixedInputStream[] inputStreams,
-                                              PrintStream systemOut,
-                                              OutputStream[] outputStreams) {
-
+    public static MergingStreamFascade create(@NonNull String name,
+                                              @NonNull PrefixedInputStream[] inputStreams,
+                                              @NonNull PrintStream systemOut,
+                                              @NonNull OutputStream[] outputStreams) {
         val fascade = new MergingStreamFascade(name, inputStreams, systemOut, outputStreams);
         fascade.start();
         return fascade;

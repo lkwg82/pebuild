@@ -10,17 +10,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 class Channel<T> {
 
-    private final AtomicInteger consumers = new AtomicInteger();
-    private final AtomicBoolean open = new AtomicBoolean(true);
     private final BlockingQueue<T> channel = new SynchronousQueue<>();
+
+    private final AtomicBoolean closed = new AtomicBoolean(true);
+    private final AtomicInteger consumers = new AtomicInteger();
 
     public void close() {
         log.debug("close channel");
-        open.set(false);
+        closed.set(true);
     }
 
     public boolean isClosed() {
-        return !open.get();
+        return closed.get();
     }
 
     public void send(T element) {
@@ -66,9 +67,9 @@ class Channel<T> {
         }
 
         public boolean isConsumable() {
-            boolean isOpen = open.get();
+            boolean isOpen = !closed.get();
             boolean hasItem = !channel.isEmpty();
-            log.debug("try receive open: {}", hasItem);
+            log.debug("try receive closed: {}", hasItem);
             log.debug("try receive has items: {}", isOpen);
             return isOpen || hasItem;
         }

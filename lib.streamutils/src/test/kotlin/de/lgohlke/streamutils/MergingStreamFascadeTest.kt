@@ -23,7 +23,9 @@ class MergingStreamFascadeTest {
     fun `should have STDOUT output collected in file`() {
         val inputStreams = createInputStreams("ok", "")
 
-        runFascade("test", inputStreams, stdout, fileOutputStream)
+        MergingStreamFascade.create("test", inputStreams, stdout, arrayOf<OutputStream>(fileOutputStream)).use {
+            //   do something
+        }
 
         val content = String(fileOutputStream.toByteArray())
         assertThat(content).contains("STDOUT ok")
@@ -33,7 +35,9 @@ class MergingStreamFascadeTest {
     fun `should have STDOUT output printed to System out`() {
         val inputStreams = createInputStreams("ok", "")
 
-        runFascade("test", inputStreams, stdout)
+        MergingStreamFascade.create("test", inputStreams, stdout, arrayOf()).use {
+            //   do something
+        }
 
         val content = String(stdoutIntern.toByteArray())
         assertThat(content).contains("[test] STDOUT ok")
@@ -43,7 +47,9 @@ class MergingStreamFascadeTest {
     fun `should have STDERR output printed to SystemOut`() {
         val inputStreams = createInputStreams("", "err")
 
-        runFascade("test", inputStreams, stdout)
+        MergingStreamFascade.create("test", inputStreams, stdout, arrayOf()).use {
+            //   do something
+        }
 
         val content = String(stdoutIntern.toByteArray())
         assertThat(content).contains("[test] STDERR err")
@@ -53,7 +59,9 @@ class MergingStreamFascadeTest {
     fun `should have STDERR output collected in filestream`() {
         val inputStreams = createInputStreams("", "err")
 
-        runFascade("test", inputStreams, stdout, fileOutputStream)
+        MergingStreamFascade.create("test", inputStreams, stdout, arrayOf<OutputStream>(fileOutputStream)).use {
+            //   do something
+        }
 
         val content = String(fileOutputStream.toByteArray())
         assertThat(content).contains("STDERR err")
@@ -65,9 +73,4 @@ class MergingStreamFascadeTest {
         return arrayOf(out, err)
     }
 
-    private fun runFascade(jobName: String, inputStreams: Array<PrefixedInputStream>, stdout: PrintStream, vararg outputStreams: OutputStream) {
-        MergingStreamFascade.create(jobName, inputStreams, stdout, outputStreams).use {
-            //   do something
-        }
-    }
 }

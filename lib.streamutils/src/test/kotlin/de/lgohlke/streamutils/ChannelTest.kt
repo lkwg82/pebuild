@@ -86,7 +86,6 @@ class ChannelTest {
         }
     }
 
-    //    @Test
     @RepeatedTest(100)
     fun `should consume last item on slow receiver when sender closed already`() {
         val receiverStarted = CountDownLatch(1)
@@ -98,7 +97,6 @@ class ChannelTest {
                     receiverStarted.countDown()
                     val receive = r.receive()
                     TimeUnit.MILLISECONDS.sleep(10)
-                    println("received")
                     received.put(receive)
                 }
                 receiverFinished.countDown()

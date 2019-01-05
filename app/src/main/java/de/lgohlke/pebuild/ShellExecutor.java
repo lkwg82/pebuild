@@ -16,8 +16,15 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 class ShellExecutor extends StepExecutor {
+    private final boolean syncAfter;
+
     ShellExecutor(String name, String command, Duration timeout, JobTrigger jobTrigger) {
+        this(name, command, timeout, jobTrigger, false);
+    }
+
+    ShellExecutor(String name, String command, Duration timeout, JobTrigger jobTrigger, boolean syncAfter) {
         super(name, command, timeout, jobTrigger);
+        this.syncAfter = syncAfter;
     }
 
     @SneakyThrows
@@ -25,8 +32,8 @@ class ShellExecutor extends StepExecutor {
         ProcessBuilder processBuilder = createWrappedInShell(command);
 
         processBuilder.inheritIO()
-                .start()
-                .waitFor();
+                      .start()
+                      .waitFor();
     }
 
     @Override
@@ -35,7 +42,8 @@ class ShellExecutor extends StepExecutor {
 
         String filename = "step." + getName() + ".output";
 
-        if (Configuration.REPORT_DIRECTORY.value().isEmpty()) {
+        if (Configuration.REPORT_DIRECTORY.value()
+                                          .isEmpty()) {
             Configuration.REPORT_DIRECTORY.setIfMissing(System.getProperty("user.dir"));
         }
 
@@ -53,8 +61,12 @@ class ShellExecutor extends StepExecutor {
                 log.info("finished");
             }
 
-            fout.flush();
-            fout.getFD().sync();
+            // this is only for tests when immediately the output needs to be verified
+            if (syncAfter) {
+                fout.flush();
+                fout.getFD()
+                    .sync();
+            }
         }
     }
 

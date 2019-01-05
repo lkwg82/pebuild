@@ -27,7 +27,7 @@ class ShellExecutorIT {
     void setUp() throws IOException {
         tempDirectory = Files.createTempDirectory(new Random().nextInt() + "");
         Configuration.REPORT_DIRECTORY.overwrite(tempDirectory.toAbsolutePath()
-                                                         .toString());
+                                                              .toString());
     }
 
     @AfterEach
@@ -40,7 +40,8 @@ class ShellExecutorIT {
         ShellExecutor shellExecutor = new ShellExecutor("test",
                                                         "echo hello err >&2; echo hello out",
                                                         Duration.ZERO,
-                                                        new JobTrigger("test"));
+                                                        new JobTrigger("test"),
+                                                        true);
 
         shellExecutor.runCommand();
 

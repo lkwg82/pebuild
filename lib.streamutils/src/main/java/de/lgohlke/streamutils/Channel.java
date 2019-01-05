@@ -12,7 +12,7 @@ class Channel<T> {
 
     private final BlockingQueue<T> channel = new SynchronousQueue<>();
 
-    private final AtomicBoolean closed = new AtomicBoolean(true);
+    private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicInteger consumers = new AtomicInteger();
 
     public void close() {
@@ -39,7 +39,8 @@ class Channel<T> {
             log.debug("sent: {}", element);
         } catch (InterruptedException e) {
             log.debug("could not send: {} ({})", element, e.getMessage());
-            Thread.currentThread().interrupt();
+            Thread.currentThread()
+                  .interrupt();
         }
     }
 

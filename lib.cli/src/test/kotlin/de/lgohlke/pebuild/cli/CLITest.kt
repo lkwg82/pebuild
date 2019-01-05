@@ -1,3 +1,5 @@
+package de.lgohlke.pebuild.cli
+
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import picocli.CommandLine
@@ -69,25 +71,4 @@ internal class CLITest {
         assertThat(System.getProperties()).containsEntry(key, "DEBUG")
     }
 
-    @CommandLine.Command(name = "pebuild")
-    internal inner class CLI {
-        fun toggleFlags() {
-            val key = "org.slf4j.simpleLogger.log.de.lgohlke.pebuild"
-            if (verbose) {
-                System.setProperty(key, "INFO")
-            }
-            if (debug) {
-                System.setProperty(key, "DEBUG")
-            }
-        }
-
-        @CommandLine.Option(names = ["-h", "--help"], usageHelp = true, description = ["shows help"])
-        var helpRequested = false
-
-        @CommandLine.Option(names = ["-v", "--verbose"], description = ["enable verbose logging"])
-        var verbose = false
-
-        @CommandLine.Option(names = ["-d", "--debug"], description = ["enable debug logging"])
-        var debug = false
-    }
 }

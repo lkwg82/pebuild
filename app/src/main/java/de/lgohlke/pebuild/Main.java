@@ -1,9 +1,12 @@
 package de.lgohlke.pebuild;
 
+import de.lgohlke.pebuild.cli.CLI;
 import de.lgohlke.pebuild.config.BuildConfigReader;
 import de.lgohlke.pebuild.graph.ExecutionGraph;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
+import picocli.CommandLine;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,10 +17,14 @@ import java.nio.file.Paths;
 @Slf4j
 public class Main {
 
-    // TODO cli parser: https://github.com/remkop/picocli
-
     public static void main(String... args) {
         EnvironmentConfigurer.mergeEnvironmentAndSystemProperties();
+
+        val cli = new CLI();
+        val commandLine = new CommandLine(cli);
+        val parseResult = commandLine.parseArgs(args);
+
+        cli.toggleFlags();
 
         graalvmTest();
 

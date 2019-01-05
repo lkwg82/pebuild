@@ -3,7 +3,7 @@ package de.lgohlke.pebuild.cli
 import picocli.CommandLine
 
 @CommandLine.Command(name = "pebuild")
-internal class CLI {
+class CLI {
     fun toggleFlags() {
         val key = "org.slf4j.simpleLogger.log.de.lgohlke.pebuild"
         if (verbose) {

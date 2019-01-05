@@ -22,9 +22,24 @@ public class Main {
 
         val cli = new CLI();
         val commandLine = new CommandLine(cli);
-        val parseResult = commandLine.parseArgs(args);
+        try {
+            val parseResult = commandLine.parseArgs(args);
 
-        cli.toggleFlags();
+            cli.toggleFlags();
+
+            if (commandLine.isUsageHelpRequested()) {
+                commandLine.usage(System.out);
+                System.exit(0);
+            }
+
+            // TODO check exit codes
+        } catch (CommandLine.UnmatchedArgumentException e) {
+            if (e.isUnknownOption()) {
+                System.err.println(e.getMessage());
+                commandLine.usage(System.err);
+                System.exit(1);
+            }
+        }
 
         graalvmTest();
 

@@ -31,6 +31,5 @@ class CompleteIT {
         } catch (e: IllegalStateException) {
             assertThat(e.message).isEqualTo("missing config file: unknown.pbuild.yml")
         }
-
     }
 }

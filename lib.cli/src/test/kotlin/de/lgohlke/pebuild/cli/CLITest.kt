@@ -3,8 +3,15 @@ package de.lgohlke.pebuild.cli
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import picocli.CommandLine
+import picocli.codegen.aot.graalvm.ReflectionConfigGenerator
 
 internal class CLITest {
+
+    @Test
+    fun `should create reflection file for graalvm`() {
+        ReflectionConfigGenerator.main("-o ", "graalvm.reflection.json", CLI::class.java.canonicalName)
+    }
+
     @Test
     fun test() {
         val args = arrayOf("-h")

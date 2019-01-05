@@ -31,7 +31,7 @@ native-image \
     --no-server \
     --class-path app/target/classes:${classPathOfJar} \
     -H:+ReportUnsupportedElementsAtRuntime \
-    -H:ReflectionConfigurationFiles=lib.config/graalvm.reflections.json \
+    -H:ReflectionConfigurationFiles=lib.config/graalvm.reflections.json,lib.cli/graalvm.reflection.json \
     -H:Path=target \
     -H:Name="pebuild" \
     de.lgohlke.pebuild.Main
@@ -40,9 +40,9 @@ native-image \
 # upx -v target/pbuild
 
 if [[ "$unamestr" == 'Linux' ]]; then
-  /usr/bin/time -v ./target/pebuild date
+  /usr/bin/time -v ./target/pebuild -h
 elif [[ "$unamestr" == 'Darwin' ]]; then
-  /usr/bin/time -lp ./target/pebuild date
+  /usr/bin/time -lp ./target/pebuild -h
 fi
 
 if [[ $? == 0 ]]; then

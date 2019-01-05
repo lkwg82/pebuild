@@ -2,6 +2,6 @@
 
 set -ex
 
-mvn clean verify
+./mvnw clean verify
 scripts/compile-to-binary.sh
 scripts/test-with-binary.sh

@@ -1,15 +1,16 @@
 package de.lgohlke.pebuild;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.HashSet;
 import java.util.Set;
 
-@RequiredArgsConstructor
 public class JobTrigger {
     private final String jobName;
 
     private final Set<JobTriggerHandler> jobTriggerHandlers = new HashSet<>();
+
+    public JobTrigger(String jobName) {
+        this.jobName = jobName;
+    }
 
     public void registerHandler(JobTriggerHandler handler) {
         jobTriggerHandlers.add(handler);

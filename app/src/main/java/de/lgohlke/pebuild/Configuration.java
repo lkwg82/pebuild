@@ -1,7 +1,10 @@
 package de.lgohlke.pebuild;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.nio.file.Paths;
 
+@Slf4j
 public enum Configuration {
 
     FILE,
@@ -20,7 +23,10 @@ public enum Configuration {
     public void setIfMissing(String value) {
         if (!System.getProperties()
                    .containsKey(fullName())) {
+            log.debug("set {} to {}", fullName(), value);
             overwrite(value);
+        } else {
+            log.debug("canot set {} to {}, already set with ", fullName(), value, value());
         }
     }
 

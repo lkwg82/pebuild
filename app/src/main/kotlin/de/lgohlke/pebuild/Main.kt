@@ -44,6 +44,7 @@ class Main {
             graalvmTest()
 
             EnvironmentConfigurer.mergeEnvironmentAndSystemProperties()
+            EnvironmentConfigurer().configureMeaningfullDefaults()
 
             val cli = CLI()
             val cmd = CommandLine(cli)

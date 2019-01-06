@@ -36,6 +36,6 @@ class CompleteIT {
     @Test
     internal fun demo() {
         Configuration.REPORT_DIRECTORY.overwrite("target/pebuild.d")
-        Main.main(arrayOf("-v", "-d", "exec", "date"))
+        Main.fromJava(arrayOf("-v", "-d", "exec", "date"))
     }
 }

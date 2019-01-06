@@ -24,24 +24,33 @@ class Main {
 
         @JvmStatic
         fun main(args: Array<String>) {
+            fromCLI(args)
+        }
+
+        private fun fromCLI(args: Array<String>) {
+            run(args, RunAll().andExit(0), DefaultExceptionHandler<List<Any>>().andExit(1))
+        }
+
+        @JvmStatic
+        fun fromJava(args: Array<String>) {
+            run(args, RunAll(), DefaultExceptionHandler())
+        }
+
+        @JvmStatic
+        private fun run(args: Array<String>,
+                        handler1: CommandLine.AbstractParseResultHandler<List<Any>>,
+                        exceptionHandler1: DefaultExceptionHandler<List<Any>>) {
+
             graalvmTest()
 
             EnvironmentConfigurer.mergeEnvironmentAndSystemProperties()
 
             val cli = CLI()
             val cmd = CommandLine(cli)
+            val handler = handler1.useOut(out).useAnsi(AUTO)
+            val exceptionHandler = exceptionHandler1.useErr(err).useAnsi(AUTO)
 
-            val handler = RunAll().useOut(out).useAnsi(AUTO)
-            val exceptionHandler = DefaultExceptionHandler<List<Any>>().useErr(err).useAnsi(AUTO)
-
-            val result = cmd.parseWithHandlers<List<Any>>(handler, exceptionHandler, *args)
-
-            println(result)
-
-            val threadSet = Thread.getAllStackTraces().keys
-            for (t in threadSet) {
-                println("thread: " + t.name)
-            }
+            cmd.parseWithHandlers<List<Any>>(handler, exceptionHandler, *args)
         }
 
         private fun graalvmTest() {

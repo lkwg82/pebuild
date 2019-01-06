@@ -33,10 +33,12 @@ internal class PELoggerTest {
     }
 
     @Test
-    internal fun `should log when default ERROR`() {
-        logger.error("asdsad4")
+    internal fun `should log with correct logger`() {
+        val logger = PELogger(clazz = "x.y.c.d", outStream = outStream, properties = properties)
 
-        assertOutput().endsWith("asdsad4\n")
+        logger.error("asdsad6")
+
+        assertOutput().endsWith("x.y.c.d - asdsad6\n")
     }
 
     @Nested
@@ -55,12 +57,13 @@ internal class PELoggerTest {
         @Test
         fun `clazz config should override global config`() {
             properties.setProperty(logger.logPrefix + ".defaultLogLevel", "INFO")
+            properties.setProperty(logger.logPrefix + ".log.x", "WARN")
 
             val logger = PELogger(clazz = "x", outStream = outStream, properties = properties)
 
             logger.info("asdsad5")
 
-            assertOutput().endsWith("asdsad5\n")
+            assertOutput().isEmpty()
         }
     }
 

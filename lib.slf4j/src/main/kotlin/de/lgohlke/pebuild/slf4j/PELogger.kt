@@ -47,8 +47,7 @@ class PELogger(private val clazz: String,
     }
 
     private fun printOut(line: String) {
-        outStream.write(line.toByteArray())
-        outStream.write("\n".toByteArray())
+        outStream.write((line + "\n").toByteArray())
     }
 
     private fun isLevelEnabled(level: Level): Boolean {

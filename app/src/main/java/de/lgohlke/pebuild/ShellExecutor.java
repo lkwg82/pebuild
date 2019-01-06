@@ -30,15 +30,6 @@ class ShellExecutor extends StepExecutor {
         this.syncAfter = syncAfter;
     }
 
-    @SneakyThrows
-    static void executeInheritedIO(String command) {
-        ProcessBuilder processBuilder = createWrappedInShell(command);
-
-        processBuilder.inheritIO()
-                      .start()
-                      .waitFor();
-    }
-
     @Override
     public ExecutionResult runCommand() throws Exception {
         Process process = startProcess();
@@ -55,6 +46,13 @@ class ShellExecutor extends StepExecutor {
                 int exitCode = process.waitFor();
                 log.debug("finished with exit code {}", exitCode);
                 return new ExecutionResult(exitCode, "");
+            } finally {
+                // this is only for tests when immediately the output needs to be verified
+                if (syncAfter) {
+                    fout.flush();
+                    fout.getFD()
+                        .sync();
+                }
             }
         }
     }

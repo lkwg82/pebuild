@@ -1,50 +1,28 @@
 package de.lgohlke.pebuild.cli
 
+import de.lgohlke.pebuild.EnvironmentConfigurer
 import de.lgohlke.pebuild.ExecCommand
-import org.slf4j.LoggerFactory
 import picocli.CommandLine
+import java.util.*
 import java.util.concurrent.Callable
 
 @CommandLine.Command(name = "pebuild", subcommands = [ExecCommand::class])
-class CLI : Callable<Void> {
-    companion object Log {
-        @Suppress("JAVA_CLASS_ON_COMPANION")
-        @JvmStatic
-        private val log = LoggerFactory.getLogger(javaClass.enclosingClass)
-    }
-
+class CLI(private val prop: Properties = System.getProperties()) : Callable<Void> {
     override fun call(): Void? {
-        toggleFlags()
-//            val commandLine = CommandLine(this)
-//            try {
-//                val parseResult = commandLine.parseArgs(*args)
-//
-//                cli.toggleFlags()
-//
-//                if (commandLine.isUsageHelpRequested) {
-//                    commandLine.usage(System.out)
-//                    System.exit(0)
-//                }
-//
-//                // TODO check exit codes
-//            } catch (e: CommandLine.UnmatchedArgumentException) {
-//                if (e.isUnknownOption) {
-//                    System.err.println(e.message)
-//                    commandLine.usage(System.err)
-//                    System.exit(1)
-//                }
-//            }
+        decideAboutLogging()
+
+        EnvironmentConfigurer.mergeEnvironmentAndSystemProperties()
+        EnvironmentConfigurer().configureMeaningfullDefaults()
         return null
     }
 
-    fun toggleFlags() {
-        val key = "org.slf4j.simpleLogger.log.de.lgohlke.pebuild"
+    private fun decideAboutLogging() {
+        val key = "org.slf4j.simpleLogger.defaultLogLevel"
         if (verbose) {
-            System.setProperty(key, "INFO")
+            prop.setProperty(key, "INFO")
         }
         if (debug) {
-            log.info("enable debugging")
-            System.setProperty(key, "DEBUG")
+            prop.setProperty(key, "DEBUG")
         }
     }
 

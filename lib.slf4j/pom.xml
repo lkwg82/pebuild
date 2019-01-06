@@ -9,12 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>lib.streamutils</artifactId>
-    <dependencies>
-        <dependency>
-            <groupId>de.lgohlke.ci</groupId>
-            <version>1.0-SNAPSHOT</version>
-            <artifactId>lib.slf4j</artifactId>
-        </dependency>
-    </dependencies>
+    <artifactId>lib.slf4j</artifactId>
+
+
 </project>

@@ -13,6 +13,7 @@
         <module>lib.config</module>
         <module>lib.streamutils</module>
         <module>app</module>
+        <module>lib.slf4j</module>
     </modules>
 
     <properties>
@@ -206,8 +207,13 @@
 
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
+            <artifactId>slf4j-api</artifactId>
             <version>1.8.0-beta2</version>
         </dependency>
+        <!--<dependency>-->
+        <!--<groupId>org.slf4j</groupId>-->
+        <!--<artifactId>slf4j-jdk14</artifactId>-->
+        <!--<version>1.8.0-beta2</version>-->
+        <!--</dependency>-->
     </dependencies>
 </project>

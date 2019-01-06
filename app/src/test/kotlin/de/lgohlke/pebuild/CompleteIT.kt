@@ -34,8 +34,19 @@ class CompleteIT {
     }
 
     @Test
-    internal fun demo() {
+    internal fun `should exec date`() {
         Configuration.REPORT_DIRECTORY.overwrite("target/pebuild.d")
-        Main.fromJava(arrayOf("-v", "-d", "exec", "date"))
+        Main.fromJava(arrayOf("-d", "exec", "-e", "date"))
+    }
+
+    @Test
+    internal fun `should show help`() {
+        Main.fromJava(arrayOf("-h"))
+    }
+
+    @Test
+    internal fun `should exec exit 1`() {
+        Configuration.REPORT_DIRECTORY.overwrite("target/pebuild.d")
+        Main.fromJava(arrayOf("exec", "-e", "exit 1"))
     }
 }

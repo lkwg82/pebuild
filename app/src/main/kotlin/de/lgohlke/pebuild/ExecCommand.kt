@@ -4,12 +4,22 @@ import picocli.CommandLine
 import java.time.Duration
 import java.util.concurrent.Callable
 
-@CommandLine.Command(name = "exec", aliases = ["e"])
+@CommandLine.Command(name = "exec", aliases = ["e"], mixinStandardHelpOptions = true)
 class ExecCommand : Callable<Void> {
+
+    @CommandLine.Option(names = ["-e"],
+                        description = ["suppresses exiting with actual code (only for testing purposes"])
+    var suppressExitCode = false
+
     override fun call(): Void? {
         val cmd = commands.joinToString(" ")
-        ShellExecutor("test", cmd, Duration.ZERO, JobTrigger("test"))
-                .runCommand()
+        val executor = ShellExecutor("test", cmd, Duration.ZERO, JobTrigger("test"))
+        val executionResult = executor.runCommand()
+
+        if (!suppressExitCode) {
+            System.exit(executionResult.exitCode)
+        }
+
         return null
     }
 

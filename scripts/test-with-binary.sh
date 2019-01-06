@@ -10,6 +10,7 @@ alias bin='target/pebuild'
 function t {
     local name=$1
     local bin=$2
+    local expectedExitCode=${3:-0}
 
     local RED='\033[0;31m'
     local GREEN='\033[0;32m'
@@ -26,7 +27,7 @@ function t {
     local exitCode=$?
     set -e
 
-    if [[ ${exitCode} == "0" ]]; then
+    if [[ ${exitCode} == ${expectedExitCode} ]]; then
         printf "${GREEN}ok${NC}\n"
     else
         printf "${RED}fail${NC}\n"
@@ -38,3 +39,4 @@ function t {
 
 t "help" "bin -h"
 t "exec date" "bin -d exec date"
+t "exit 1" "bin exec exit 1" 1

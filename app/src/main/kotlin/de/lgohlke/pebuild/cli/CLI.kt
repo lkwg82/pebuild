@@ -6,7 +6,9 @@ import picocli.CommandLine
 import java.util.*
 import java.util.concurrent.Callable
 
-@CommandLine.Command(name = "pebuild", subcommands = [ExecCommand::class])
+@CommandLine.Command(name = "pebuild",
+                     subcommands = [ExecCommand::class, CommandLine.HelpCommand::class],
+                     mixinStandardHelpOptions = true)
 class CLI(private val prop: Properties = System.getProperties()) : Callable<Void> {
     override fun call(): Void? {
         decideAboutLogging()
@@ -25,9 +27,6 @@ class CLI(private val prop: Properties = System.getProperties()) : Callable<Void
             prop.setProperty(key, "DEBUG")
         }
     }
-
-    @CommandLine.Option(names = ["-h", "--help"], usageHelp = true, description = ["shows help"])
-    var helpRequested = false
 
     @CommandLine.Option(names = ["-v", "--verbose"], description = ["enable verbose logging"])
     var verbose = false

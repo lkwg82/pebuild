@@ -5,9 +5,8 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public
-class ExecutionResult {
-    private final int exitCode;
+public class ExecutionResult {
+    public final int exitCode;
     @Deprecated
     private final String stdout;
 }

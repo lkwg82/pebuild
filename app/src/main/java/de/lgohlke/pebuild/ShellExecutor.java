@@ -38,15 +38,6 @@ class ShellExecutor extends StepExecutor {
 
     @Override
     public void runCommand() throws Exception {
-
-        System.getProperties()
-              .forEach((k, v) -> {
-                  if (k.toString()
-                       .contains("log")) {
-                      log.error("key {} -> {}", k, v);
-                  }
-              });
-
         log.info("executing: '{}'", getCommand());
         ProcessBuilder processBuilder = createWrappedInShell(getCommand());
 

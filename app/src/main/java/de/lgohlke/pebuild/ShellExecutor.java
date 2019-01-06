@@ -5,11 +5,14 @@ import de.lgohlke.streamutils.PrefixedInputStream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -37,13 +40,27 @@ class ShellExecutor extends StepExecutor {
     }
 
     @Override
-    public void runCommand() throws Exception {
-        log.info("executing: '{}'", getCommand());
-        ProcessBuilder processBuilder = createWrappedInShell(getCommand());
+    public ExecutionResult runCommand() throws Exception {
+        Process process = startProcess();
+        Path outputFile = prepareOutputFile();
 
-        log.debug("starting");
-        Process process = processBuilder.start();
+        try (val fout = new FileOutputStream(outputFile.toFile())) {
+            PrefixedInputStream stdout = new PrefixedInputStream(process.getInputStream(), "STDOUT");
+            PrefixedInputStream stderr = new PrefixedInputStream(process.getErrorStream(), "STDERR");
 
+            PrefixedInputStream[] inputStreams = {stdout, stderr};
+            OutputStream[] outputStreams = {fout};
+
+            try (val ignored = MergingStreamFascade.create(getName(), inputStreams, System.out, outputStreams)) {
+                int exitCode = process.waitFor();
+                log.debug("finished with exit code {}", exitCode);
+                return new ExecutionResult(exitCode, "");
+            }
+        }
+    }
+
+    @NotNull
+    private Path prepareOutputFile() {
         String filename = "step." + getName() + ".output";
 
         if (Configuration.REPORT_DIRECTORY.value()
@@ -57,25 +74,16 @@ class ShellExecutor extends StepExecutor {
         if (!directory.exists()) {
             directory.mkdirs();
         }
-        try (val fout = new FileOutputStream(outputFile.toFile())) {
-            PrefixedInputStream stdout = new PrefixedInputStream(process.getInputStream(), "STDOUT");
-            PrefixedInputStream stderr = new PrefixedInputStream(process.getErrorStream(), "STDERR");
+        return outputFile;
+    }
 
-            PrefixedInputStream[] inputStreams = {stdout, stderr};
-            OutputStream[] outputStreams = {fout};
+    @NotNull
+    private Process startProcess() throws IOException {
+        log.info("executing: '{}'", getCommand());
+        ProcessBuilder processBuilder = createWrappedInShell(getCommand());
 
-            try (val ignored = MergingStreamFascade.create(getName(), inputStreams, System.out, outputStreams)) {
-                process.waitFor();
-                log.debug("finished");
-            }
-
-            // this is only for tests when immediately the output needs to be verified
-            if (syncAfter) {
-                fout.flush();
-                fout.getFD()
-                    .sync();
-            }
-        }
+        log.debug("starting");
+        return processBuilder.start();
     }
 
     @SneakyThrows

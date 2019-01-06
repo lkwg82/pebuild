@@ -43,8 +43,9 @@ public abstract class StepExecutor {
         }
     }
 
-    public void runCommand() throws Exception {
+    public ExecutionResult runCommand() throws Exception {
         // TODO
+        return null;
     }
 
     public void waitFor(StepExecutor executor) {

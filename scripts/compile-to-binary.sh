@@ -31,7 +31,7 @@ native-image \
     --no-server \
     --class-path app/target/classes:${classPathOfJar} \
     -H:+ReportUnsupportedElementsAtRuntime \
-    -H:ReflectionConfigurationFiles=lib.config/graalvm.reflections.json,lib.cli/graalvm.reflection.json \
+    -H:ReflectionConfigurationFiles=lib.config/graalvm.reflections.json,app/graalvm.reflection.json \
     -H:Path=target \
     -H:Name="pebuild" \
     de.lgohlke.pebuild.Main

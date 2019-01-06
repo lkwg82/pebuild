@@ -32,4 +32,10 @@ class CompleteIT {
             assertThat(e.message).isEqualTo("missing config file: unknown.pbuild.yml")
         }
     }
+
+    @Test
+    internal fun demo() {
+        Configuration.REPORT_DIRECTORY.overwrite("target/pebuild.d")
+        Main.main(arrayOf("-v", "-d", "exec", "date"))
+    }
 }

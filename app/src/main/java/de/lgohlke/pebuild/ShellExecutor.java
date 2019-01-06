@@ -38,7 +38,20 @@ class ShellExecutor extends StepExecutor {
 
     @Override
     public void runCommand() throws Exception {
-        Process process = createWrappedInShell(getCommand()).start();
+
+        System.getProperties()
+              .forEach((k, v) -> {
+                  if (k.toString()
+                       .contains("log")) {
+                      log.error("key {} -> {}", k, v);
+                  }
+              });
+
+        log.info("executing: '{}'", getCommand());
+        ProcessBuilder processBuilder = createWrappedInShell(getCommand());
+
+        log.debug("starting");
+        Process process = processBuilder.start();
 
         String filename = "step." + getName() + ".output";
 
@@ -56,9 +69,8 @@ class ShellExecutor extends StepExecutor {
             OutputStream[] outputStreams = {fout};
 
             try (val ignored = MergingStreamFascade.create(getName(), inputStreams, System.out, outputStreams)) {
-                log.info("starting");
                 process.waitFor();
-                log.info("finished");
+                log.debug("finished");
             }
 
             // this is only for tests when immediately the output needs to be verified

@@ -37,3 +37,4 @@ function t {
 }
 
 t "help" "bin -h"
+t "help" "bin -d exec date"

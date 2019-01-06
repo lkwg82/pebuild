@@ -72,7 +72,7 @@ public class MergingStreamFascade implements AutoCloseable {
         try {
             service.shutdownNow();
             log.debug("shutting down");
-            service.awaitTermination(1, TimeUnit.MILLISECONDS);
+            service.awaitTermination(10, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             log.error(e.getMessage(), e);
             Thread.currentThread()
@@ -107,7 +107,6 @@ public class MergingStreamFascade implements AutoCloseable {
                     }
                 }
             }
-
         };
 
         val threadExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -118,7 +117,7 @@ public class MergingStreamFascade implements AutoCloseable {
             threadExecutor.shutdownNow();
             threadExecutor.awaitTermination(1, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            // dont log, this is intended
+            log.error(e.getMessage(), e);
             Thread.currentThread()
                   .interrupt();
         }

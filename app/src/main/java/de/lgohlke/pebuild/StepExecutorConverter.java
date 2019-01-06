@@ -8,7 +8,7 @@ class StepExecutorConverter {
     private final Step step;
     private final JobTrigger jobTrigger;
 
-    public ShellExecutor asShellExecutor() {
+    ShellExecutor asShellExecutor() {
         return new ShellExecutor(step.getName(), step.getCommand(), step.getTimeoutAsDuration(), jobTrigger);
     }
 }

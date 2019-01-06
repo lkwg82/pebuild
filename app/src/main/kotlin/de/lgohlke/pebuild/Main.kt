@@ -2,7 +2,6 @@ package de.lgohlke.pebuild
 
 import de.lgohlke.pebuild.cli.CLI
 import de.lgohlke.pebuild.config.BuildConfigReader
-import org.slf4j.LoggerFactory.getLogger
 import picocli.CommandLine
 import picocli.CommandLine.DefaultExceptionHandler
 import picocli.CommandLine.Help.Ansi.AUTO
@@ -17,10 +16,6 @@ import java.nio.file.Paths
 
 class Main {
     companion object {
-        @Suppress("JAVA_CLASS_ON_COMPANION")
-        @JvmStatic
-        private val log = getLogger(javaClass.enclosingClass)
-
 
         @JvmStatic
         fun main(args: Array<String>) {
@@ -41,17 +36,14 @@ class Main {
                         handler1: CommandLine.AbstractParseResultHandler<List<Any>>,
                         exceptionHandler1: DefaultExceptionHandler<List<Any>>) {
 
-            graalvmTest()
-
-            EnvironmentConfigurer.mergeEnvironmentAndSystemProperties()
-            EnvironmentConfigurer().configureMeaningfullDefaults()
-
             val cli = CLI()
             val cmd = CommandLine(cli)
             val handler = handler1.useOut(out).useAnsi(AUTO)
             val exceptionHandler = exceptionHandler1.useErr(err).useAnsi(AUTO)
 
             cmd.parseWithHandlers<List<Any>>(handler, exceptionHandler, *args)
+
+            graalvmTest()
         }
 
         private fun graalvmTest() {
@@ -71,8 +63,6 @@ class Main {
             BuildConfigReader.parse(yaml)
 
             GraphBuilder.build(yaml)
-
-            log.info("test")
         }
     }
 

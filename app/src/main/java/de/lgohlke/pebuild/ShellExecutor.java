@@ -61,6 +61,11 @@ class ShellExecutor extends StepExecutor {
         }
 
         val outputFile = Paths.get(Configuration.REPORT_DIRECTORY.value(), filename);
+        val directory = outputFile.getParent()
+                                  .toFile();
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
         try (val fout = new FileOutputStream(outputFile.toFile())) {
             PrefixedInputStream stdout = new PrefixedInputStream(process.getInputStream(), "STDOUT");
             PrefixedInputStream stderr = new PrefixedInputStream(process.getErrorStream(), "STDERR");

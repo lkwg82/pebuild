@@ -59,7 +59,7 @@ class PELogger(private val clazz: String,
     private fun lazyInitLogLevel(): Level {
 
         val (_, levelGlobal) = detectLogLevel("$logPrefix.defaultLogLevel")
-        val (foundClazz, levelClazz) = detectLogLevel("$logPrefix.log." + clazz)
+        val (foundClazz, levelClazz) = detectLogLevel("$logPrefix.log.$clazz")
 
         var computelLevel = levelGlobal
         if (foundClazz) {

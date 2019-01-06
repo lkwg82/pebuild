@@ -36,8 +36,8 @@ public class MergingStreamFascade implements AutoCloseable {
         this.outputStreams = outputStreams;
         this.inputStreams = inputStreams;
 
-        this.notifyWaiter = new NotifyWaiter(inputStreams.length);
-        this.service = Executors.newFixedThreadPool(1 + inputStreams.length);
+        notifyWaiter = new NotifyWaiter(inputStreams.length);
+        service = Executors.newFixedThreadPool(1 + inputStreams.length);
     }
 
     public static MergingStreamFascade create(@NonNull String name,
@@ -52,7 +52,7 @@ public class MergingStreamFascade implements AutoCloseable {
     private void start() {
         service.submit(() -> receiver(jobName));
 
-        for (final PrefixedInputStream inputStream : inputStreams) {
+        for (PrefixedInputStream inputStream : inputStreams) {
             service.submit(() -> sender(inputStream));
         }
     }
@@ -63,16 +63,20 @@ public class MergingStreamFascade implements AutoCloseable {
 
     @Override
     public void close() {
+        log.debug("closing");
         notifyWaiter.waitForSenderStarted();
         notifyWaiter.waitForSenderStopped();
         channel.close();
         notifyWaiter.notifyReceiverStopped();
 
         try {
+            service.shutdownNow();
+            log.debug("shutting down");
             service.awaitTermination(1, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             log.error(e.getMessage(), e);
-            Thread.currentThread().interrupt();
+            Thread.currentThread()
+                  .interrupt();
         }
     }
 
@@ -87,8 +91,9 @@ public class MergingStreamFascade implements AutoCloseable {
                     try {
                         line = receiver.receive();
                     } catch (InterruptedException e) {
-                        log.error(e.getMessage(), e);
-                        Thread.currentThread().interrupt();
+                        // dont log, this is intended
+                        Thread.currentThread()
+                              .interrupt();
                         return;
                     }
 
@@ -110,10 +115,12 @@ public class MergingStreamFascade implements AutoCloseable {
 
         notifyWaiter.waitForReceiverStopped();
         try {
+            threadExecutor.shutdownNow();
             threadExecutor.awaitTermination(1, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            log.error(e.getMessage(), e);
-            Thread.currentThread().interrupt();
+            // dont log, this is intended
+            Thread.currentThread()
+                  .interrupt();
         }
 
         log.debug("finished consumer:{}", jobName);

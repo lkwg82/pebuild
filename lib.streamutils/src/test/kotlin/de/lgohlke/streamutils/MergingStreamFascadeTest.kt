@@ -13,6 +13,11 @@ class MergingStreamFascadeTest {
     companion object {
         init {
             System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.MergingStreamFascade", "DEBUG")
+            System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.NotifyWaiter", "DEBUG")
+
+            System.setProperty("org.slf4j.simpleLogger.showDateTime", "true")
+            System.setProperty("org.slf4j.simpleLogger.showShortLogName", "true")
+            System.setProperty("org.slf4j.simpleLogger.dateTimeFormat", "HH:mm:ss:SSS")
         }
     }
 
@@ -20,7 +25,7 @@ class MergingStreamFascadeTest {
     private val stdout = PrintStream(stdoutIntern, true)
     private val fileOutputStream = ByteArrayOutputStream()
 
-    @RepeatedTest(100)
+    @RepeatedTest(10)
     fun `should have STDOUT output collected in file`() {
         val inputStreams = createInputStreams("ok", "")
 
@@ -32,7 +37,7 @@ class MergingStreamFascadeTest {
         assertThat(content).contains("STDOUT ok")
     }
 
-    @RepeatedTest(100)
+    @RepeatedTest(10)
     fun `should have STDOUT output printed to System out`() {
         val inputStreams = createInputStreams("ok", "")
 
@@ -44,7 +49,7 @@ class MergingStreamFascadeTest {
         assertThat(content).contains("[test] STDOUT ok")
     }
 
-    @RepeatedTest(100)
+    @RepeatedTest(10)
     fun `should have STDERR output printed to SystemOut`() {
         val inputStreams = createInputStreams("", "err")
 
@@ -57,10 +62,10 @@ class MergingStreamFascadeTest {
     }
 
     private fun doSomeThing() {
-        TimeUnit.MILLISECONDS.sleep(50);
+        TimeUnit.MILLISECONDS.sleep(50)
     }
 
-    @RepeatedTest(100)
+    @RepeatedTest(10)
     fun `should have STDERR output collected in filestream`() {
         val inputStreams = createInputStreams("", "err")
 

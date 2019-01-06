@@ -63,8 +63,9 @@ public class MergingStreamFascade implements AutoCloseable {
 
     @Override
     public void close() {
-        log.debug("closing");
         notifyWaiter.waitForSenderStarted();
+
+        log.debug("closing");
         notifyWaiter.waitForSenderStopped();
         channel.close();
         notifyWaiter.notifyReceiverStopped();
@@ -115,9 +116,9 @@ public class MergingStreamFascade implements AutoCloseable {
         notifyWaiter.waitForReceiverStopped();
         try {
             threadExecutor.shutdownNow();
-            threadExecutor.awaitTermination(1, TimeUnit.MILLISECONDS);
+            threadExecutor.awaitTermination(10, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            log.error(e.getMessage(), e);
+            // ok
             Thread.currentThread()
                   .interrupt();
         }

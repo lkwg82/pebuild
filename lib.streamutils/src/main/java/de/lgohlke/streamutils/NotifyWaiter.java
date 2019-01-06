@@ -30,6 +30,7 @@ class NotifyWaiter {
     }
 
     void waitForReceiverStopped() {
+        log.debug("wait for receiver stopped :{}", receiverStopped);
         await(receiverStopped);
     }
 
@@ -37,8 +38,9 @@ class NotifyWaiter {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            log.error(e.getMessage(), e);
-            Thread.currentThread().interrupt();
+            // ok
+            Thread.currentThread()
+                  .interrupt();
         }
     }
 
@@ -51,6 +53,7 @@ class NotifyWaiter {
     }
 
     void notifyReceiverStopped() {
+        log.debug("notify receiver stopped:{}", receiverStopped);
         receiverStopped.countDown();
     }
 

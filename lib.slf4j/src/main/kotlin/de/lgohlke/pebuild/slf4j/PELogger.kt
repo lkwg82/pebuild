@@ -309,7 +309,7 @@ class PELogger(private val clazz: String,
 
     override fun warn(format: String,
                       arg: Any) {
-        throw TODO()
+        logAndFormat(WARN, format, arg)
     }
 
     override fun warn(format: String,

@@ -61,5 +61,7 @@ class NotifyWaiter {
         receiverStarted.countDown();
     }
 
-
+    boolean isSending() {
+        return senderStopped.getCount() > 0;
+    }
 }

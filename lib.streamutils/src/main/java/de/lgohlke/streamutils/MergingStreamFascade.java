@@ -61,6 +61,17 @@ public class MergingStreamFascade implements AutoCloseable {
         new DecoratingStreamer(inputStream, channel, notifyWaiter).capture();
     }
 
+    public boolean isStreaming() {
+        return notifyWaiter.isSending();
+    }
+
+    public void cancel() {
+        log.debug("cancel all sender");
+        for (val ignored : inputStreams) {
+            notifyWaiter.notifySenderStopped();
+        }
+    }
+
     @Override
     public void close() {
         notifyWaiter.waitForSenderStarted();

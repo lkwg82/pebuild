@@ -2,15 +2,13 @@ package de.lgohlke.pebuild;
 
 import de.lgohlke.streamutils.MergingStreamFascade;
 import de.lgohlke.streamutils.PrefixedInputStream;
-import lombok.SneakyThrows;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,7 +41,7 @@ class ShellExecutor extends StepExecutor {
             OutputStream[] outputStreams = {fout};
 
             try (val ignored = MergingStreamFascade.create(getName(), inputStreams, System.out, outputStreams)) {
-                int exitCode = process.waitFor();
+                int exitCode = waitForProcess(process);
                 log.debug("finished with exit code {}", exitCode);
                 return new ExecutionResult(exitCode, "");
             } finally {
@@ -52,6 +50,31 @@ class ShellExecutor extends StepExecutor {
                     fout.flush();
                     fout.getFD()
                         .sync();
+                }
+            }
+        }
+    }
+
+    private int waitForProcess(Process process) throws InterruptedException {
+        @NonNull Duration timeout = getTimeout();
+        if (timeout.isZero()) {
+            return process.waitFor();
+        } else {
+            if (process.waitFor(timeout.getSeconds(), TimeUnit.SECONDS)) {
+                log.debug("exits before timeout");
+                return process.exitValue();
+            } else {
+                log.debug("timout");
+                process.destroy();
+                if (process.waitFor(1, TimeUnit.SECONDS)) {
+                    log.debug("terminated after timeout");
+                    return process.exitValue();
+                } else {
+                    log.warn("failed to terminate");
+                    process.destroyForcibly();
+                    log.warn("killed");
+
+                    return process.exitValue();
                 }
             }
         }
@@ -84,64 +107,9 @@ class ShellExecutor extends StepExecutor {
         return processBuilder.start();
     }
 
-    @SneakyThrows
-    static String execute(String command) {
-        ProcessBuilder processBuilder = createWrappedInShell(command);
-        Process process = processBuilder.start();
-
-        BufferedReader reader =
-                new BufferedReader(new InputStreamReader(process.getInputStream()));
-        StringBuilder builder = new StringBuilder();
-        String line = null;
-        while ((line = reader.readLine()) != null) {
-            builder.append(line);
-            builder.append(System.getProperty("line.separator"));
-        }
-        return builder.toString();
-    }
-
     private static ProcessBuilder createWrappedInShell(String command) {
         String[] wrappedInShell = new String[]{"sh", "-c", command};
-
+        log.debug("raw command is '{}'", String.join(" ", wrappedInShell));
         return new ProcessBuilder(wrappedInShell);
-    }
-
-    @SneakyThrows
-    static ExecutionResult execute2(String command) {
-        Process process = createWrappedInShell(command).start();
-
-        BufferedReader reader =
-                new BufferedReader(new InputStreamReader(process.getInputStream()));
-        StringBuilder builder = new StringBuilder();
-        String line = null;
-        while ((line = reader.readLine()) != null) {
-            builder.append(line);
-            builder.append(System.getProperty("line.separator"));
-        }
-        String stdout = builder.toString();
-        return new ExecutionResult(process.waitFor(), stdout);
-    }
-
-    @SneakyThrows
-    static ExecutionResult execute3(String command, Duration maxDuration) {
-
-        Process process = createWrappedInShell(command).start();
-
-
-        String stdout = "";
-        long seconds = maxDuration.getSeconds();
-        int nano = maxDuration.getNano();
-        long nanos_to_millis = TimeUnit.NANOSECONDS.toMillis(nano);
-        long seconds_to_millis = TimeUnit.SECONDS.toMillis(seconds);
-
-        long timeout = nanos_to_millis + seconds_to_millis;
-        boolean exitedBeforeTimeout = process.waitFor(timeout, TimeUnit.MILLISECONDS);
-
-        if (!exitedBeforeTimeout) {
-            process.destroy();
-            int exitCode = process.waitFor();
-            return new ExecutionResult(exitCode, stdout);
-        }
-        return new ExecutionResult(process.waitFor(), stdout);
     }
 }

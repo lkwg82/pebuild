@@ -87,16 +87,7 @@ class ShellExecutorIT {
 
         @Test
         void exitsWithTimeoutButProcessIsKindOfBlocking() throws Exception {
-            val shellExecutor = new ShellExecutor("test", "exec sleep 777", Duration.ofSeconds(1), trigger);
-
-            val result = shellExecutor.runCommand();
-
-            assertThat(result.getExitCode()).isEqualTo(128 + 15);
-        }
-
-        @Test
-        void exitsWithTimeout() throws Exception {
-            val shellExecutor = new ShellExecutor("test", "read x", Duration.ofSeconds(1), trigger);
+            val shellExecutor = new ShellExecutor("test", "sleep 777", Duration.ofSeconds(1), trigger);
 
             val result = shellExecutor.runCommand();
 

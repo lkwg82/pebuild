@@ -12,7 +12,7 @@ import java.security.SecureRandom
 class TiniDowloaderTest {
     private val tempDirectory = Files.createTempDirectory(SecureRandom().nextDouble().toString())
     private val tmpDir = tempDirectory.toFile().absolutePath
-    private val tiniPath = Paths.get(tmpDir, "tiniPath")
+    private val tiniPath = Paths.get(tmpDir, "tini")
 
     @AfterEach
     internal fun tearDown() {
@@ -43,5 +43,4 @@ class TiniDowloaderTest {
         assertThat(tiniPath).exists()
         assertThat(tiniPath).isExecutable()
     }
-
 }

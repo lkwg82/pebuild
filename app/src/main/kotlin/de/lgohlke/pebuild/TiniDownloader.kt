@@ -1,7 +1,6 @@
 package de.lgohlke.pebuild
 
 import org.apache.commons.io.FileUtils
-import java.io.File
 import java.net.URL
 import java.nio.file.Path
 
@@ -20,7 +19,7 @@ class TiniDownloader(private val path: String = System.getenv("PATH")) {
         val url = URL("https://github.com/krallin/tini/releases/download/v0.18.0/tini-amd64")
         FileUtils.copyURLToFile(url, tini.toFile(), 2000, 2000)
 
-        File(tini.toFile().absolutePath).setExecutable(true)
+        tini.toFile().setExecutable(true)
     }
 
 }

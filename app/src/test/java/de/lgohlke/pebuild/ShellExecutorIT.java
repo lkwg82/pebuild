@@ -94,4 +94,25 @@ class ShellExecutorIT {
             assertThat(result.getExitCode()).isEqualTo(128 + 15);
         }
     }
+
+    @Test
+    void name() throws IOException {
+        byte[] bytes = Files.readAllBytes(Paths.get("/home/lars/Downloads/tini"));
+
+        System.out.println("new byte[]{");
+        for (int i = 0; i < bytes.length; i++) {
+            val x = (int) bytes[i];
+            System.out.printf("%d", Byte.toUnsignedLong(bytes[i]));
+            if (i < bytes.length - 1) {
+                System.out.print(",");
+            }
+
+            if (i % 20 == 19) {
+                System.out.println();
+            }
+
+        }
+        System.out.println("};");
+
+    }
 }

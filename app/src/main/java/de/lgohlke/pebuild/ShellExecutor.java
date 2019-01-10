@@ -40,9 +40,15 @@ class ShellExecutor extends StepExecutor {
             PrefixedInputStream[] inputStreams = {stdout, stderr};
             OutputStream[] outputStreams = {fout};
 
-            try (val ignored = MergingStreamFascade.create(getName(), inputStreams, System.out, outputStreams)) {
+            try (val streamFascade = MergingStreamFascade.create(getName(), inputStreams, System.out, outputStreams)) {
                 int exitCode = waitForProcess(process);
                 log.debug("finished with exit code {}", exitCode);
+
+                if (streamFascade.isStreaming()) {
+                    streamFascade.cancel();
+                    log.warn("blocking sub process: '{}'", getCommand());
+                }
+
                 return new ExecutionResult(exitCode, "");
             } finally {
                 // this is only for tests when immediately the output needs to be verified
@@ -101,14 +107,26 @@ class ShellExecutor extends StepExecutor {
     @NotNull
     private Process startProcess() throws IOException {
         log.info("executing: '{}'", getCommand());
-        ProcessBuilder processBuilder = createWrappedInShell(getCommand());
+        ProcessBuilder processBuilder = startTinyInitWithShellAsRoot();
 
         log.debug("starting");
-        return processBuilder.start();
+        Process process = processBuilder.start();
+
+        log.debug("raw input: {}", getCommand());
+        String rawInput = getCommand() + "\n";
+        byte[] cmd = rawInput.getBytes();
+
+        try (val outputStream = process.getOutputStream()) {
+            outputStream.write(cmd);
+        }
+        return process;
     }
 
-    private static ProcessBuilder createWrappedInShell(String command) {
-        String[] wrappedInShell = new String[]{"sh", "-c", command};
+    private static ProcessBuilder startTinyInitWithShellAsRoot() {
+
+        // TODO put tini into the path
+
+        String[] wrappedInShell = new String[]{"/home/lars/Downloads/tini", "-s", "-vvvv", "-w", "-g", "sh"};
         log.debug("raw command is '{}'", String.join(" ", wrappedInShell));
         return new ProcessBuilder(wrappedInShell);
     }

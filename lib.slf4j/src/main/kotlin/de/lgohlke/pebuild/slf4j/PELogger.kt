@@ -372,7 +372,7 @@ class PELogger(private val clazz: String,
 
     override fun error(format: String,
                        arg: Any) {
-        throw TODO()
+        logAndFormat(ERROR, format, arg)
     }
 
     override fun error(format: String,

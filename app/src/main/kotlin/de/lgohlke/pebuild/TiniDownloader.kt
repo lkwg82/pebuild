@@ -2,18 +2,31 @@ package de.lgohlke.pebuild
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
+import org.slf4j.LoggerFactory
 import java.io.StringWriter
 import java.net.URL
 import java.nio.charset.Charset
 import java.nio.file.Path
 
 class TiniDownloader(private val path: String = System.getenv("PATH")) {
-    fun download(tini: Path) {
+
+    companion object {
+        @Suppress("JAVA_CLASS_ON_COMPANION")
+        private val log = LoggerFactory.getLogger(javaClass.enclosingClass)
+    }
+
+    fun download(tini: Path): Boolean {
+        if (tini.toFile().exists()) {
+            log.debug("no need to download")
+            return false;
+        }
+        log.debug("need to download")
         // ~23kb
         val url = URL("https://github.com/krallin/tini/releases/download/v0.18.0/tini-amd64")
         FileUtils.copyURLToFile(url, tini.toFile(), 2000, 2000)
 
         tini.toFile().setExecutable(true)
+        return true;
     }
 
     fun tiniPath(): Pair<Boolean, String> {

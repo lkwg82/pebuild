@@ -3,6 +3,7 @@ package de.lgohlke.pebuild
 import org.apache.commons.io.FileUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
@@ -13,6 +14,11 @@ class TiniDowloaderTest {
     private val tempDirectory = Files.createTempDirectory(SecureRandom().nextDouble().toString())
     private val tmpDir = tempDirectory.toFile().absolutePath
     private val tiniPath = Paths.get(tmpDir, "tini")
+
+    @BeforeEach
+    fun setUp() {
+        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.pebuild.TiniDownloader", "DEBUG");
+    }
 
     @AfterEach
     internal fun tearDown() {
@@ -47,5 +53,17 @@ class TiniDowloaderTest {
 
         assertThat(tiniPath).exists()
         assertThat(tiniPath).isExecutable()
+    }
+
+    @Test
+    fun `should skip downloading tini`() {
+        assertThat(tiniPath).doesNotExist()
+
+        val downloaded = TiniDownloader().download(tiniPath)
+        assertThat(tiniPath).exists()
+        assertThat(downloaded).isTrue()
+
+        val downloaded2 = TiniDownloader().download(tiniPath)
+        assertThat(downloaded2).isFalse()
     }
 }

@@ -2,10 +2,18 @@ package de.lgohlke.pebuild
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
 class CompleteIT {
+    @BeforeEach
+    fun setUp() {
+        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.Channel", "DEBUG");
+        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.MergingStreamFascade", "DEBUG");
+        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.DecoratingStreamer", "DEBUG");
+        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.pebuild.ShellExecutor", "DEBUG");
+    }
 
     @Test
     fun simpleRun() {
@@ -32,6 +40,8 @@ class CompleteIT {
             assertThat(e.message).isEqualTo("missing config file: unknown.pbuild.yml")
         }
     }
+
+    // TODO hangs on Linux, when shellexecutor init fails to start
 
     @Test
     internal fun `should exec date`() {

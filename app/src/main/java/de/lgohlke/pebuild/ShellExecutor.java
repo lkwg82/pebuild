@@ -142,8 +142,10 @@ class ShellExecutor extends StepExecutor {
     private ProcessBuilder prepareExecutionContext() {
         val osDetector = new OSDetector();
         if (osDetector.isLinux()) {
-            val pathToTini = prepareTini();
-            String[] wrappedInShell = new String[]{pathToTini, "-s", "-vvvv", "-w", "-g", "sh"};
+            // TODO handling with tini is very instable
+//            val pathToTini = prepareTini();
+//            String[] wrappedInShell = new String[]{pathToTini, "-s", "-vvvv", "-w", "-g", "sh"};
+            String[] wrappedInShell = new String[]{"sh"};
             log.debug("raw command is '{}'", String.join(" ", wrappedInShell));
             return new ProcessBuilder(wrappedInShell);
         }

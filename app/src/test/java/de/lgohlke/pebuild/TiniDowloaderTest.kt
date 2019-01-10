@@ -23,7 +23,9 @@ class TiniDowloaderTest {
     fun `should not find tini`() {
         val downloader = TiniDownloader("/bin")
 
-        assertThat(downloader.hasTini()).isFalse()
+        val (found, _) = downloader.tiniPath();
+
+        assertThat(found).isFalse()
     }
 
     @Test
@@ -33,7 +35,10 @@ class TiniDowloaderTest {
 
         val downloader = TiniDownloader("/bin:$tmpDir")
 
-        assertThat(downloader.hasTini()).isTrue()
+        val (found, path) = downloader.tiniPath();
+
+        assertThat(found).isTrue()
+        assertThat(path).isEqualTo("$tmpDir/tini")
     }
 
     @Test

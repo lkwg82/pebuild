@@ -33,7 +33,7 @@ class ShellExecutorIT {
     void setUp() throws IOException {
         tempDirectory = Files.createTempDirectory(new Random().nextInt() + "");
         Configuration.REPORT_DIRECTORY.overwrite(tempDirectory.toAbsolutePath()
-                                                              .toString());
+                                                         .toString());
     }
 
     @AfterEach
@@ -58,7 +58,7 @@ class ShellExecutorIT {
     @Test
     void shouldLazyCreateReportDirectoryIfMissing() throws Exception {
         Configuration.REPORT_DIRECTORY.overwrite(tempDirectory.toAbsolutePath()
-                                                              .toString() + "/x/s");
+                                                         .toString() + "/x/s");
 
         val shellExecutor = new ShellExecutor("test", "env", ZERO, trigger);
 
@@ -93,26 +93,5 @@ class ShellExecutorIT {
 
             assertThat(result.getExitCode()).isEqualTo(128 + 15);
         }
-    }
-
-    @Test
-    void name() throws IOException {
-        byte[] bytes = Files.readAllBytes(Paths.get("/home/lars/Downloads/tini"));
-
-        System.out.println("new byte[]{");
-        for (int i = 0; i < bytes.length; i++) {
-            val x = (int) bytes[i];
-            System.out.printf("%d", Byte.toUnsignedLong(bytes[i]));
-            if (i < bytes.length - 1) {
-                System.out.print(",");
-            }
-
-            if (i % 20 == 19) {
-                System.out.println();
-            }
-
-        }
-        System.out.println("};");
-
     }
 }

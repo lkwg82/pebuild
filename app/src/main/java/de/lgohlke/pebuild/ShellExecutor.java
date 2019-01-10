@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -55,7 +56,7 @@ class ShellExecutor extends StepExecutor {
                 if (syncAfter) {
                     fout.flush();
                     fout.getFD()
-                        .sync();
+                            .sync();
                 }
             }
         }
@@ -91,13 +92,13 @@ class ShellExecutor extends StepExecutor {
         String filename = "step." + getName() + ".output";
 
         if (Configuration.REPORT_DIRECTORY.value()
-                                          .isEmpty()) {
+                .isEmpty()) {
             Configuration.REPORT_DIRECTORY.setIfMissing(System.getProperty("user.dir"));
         }
 
         val outputFile = Paths.get(Configuration.REPORT_DIRECTORY.value(), filename);
         val directory = outputFile.getParent()
-                                  .toFile();
+                .toFile();
         if (!directory.exists()) {
             directory.mkdirs();
         }
@@ -107,7 +108,7 @@ class ShellExecutor extends StepExecutor {
     @NotNull
     private Process startProcess() throws IOException {
         log.info("executing: '{}'", getCommand());
-        ProcessBuilder processBuilder = startTinyInitWithShellAsRoot();
+        ProcessBuilder processBuilder = prepareExecutionContext();
 
         log.debug("starting");
         Process process = processBuilder.start();
@@ -122,12 +123,61 @@ class ShellExecutor extends StepExecutor {
         return process;
     }
 
-    private static ProcessBuilder startTinyInitWithShellAsRoot() {
+    private ProcessBuilder prepareExecutionContext() {
+        val osDetector = new OSDetector();
+        if (osDetector.isLinux()) {
+            String[] wrappedInShell = new String[]{"tini", "-s", "-vvvv", "-w", "-g", "sh"};
+            log.debug("raw command is '{}'", String.join(" ", wrappedInShell));
+            val processBuilder = new ProcessBuilder(wrappedInShell);
+            prepareTini(processBuilder);
+            return processBuilder;
+        }
 
-        // TODO put tini into the path
+        if (osDetector.isMac()) {
+            String[] wrappedInShell = new String[]{"sh"};
+            log.debug("raw command is '{}'", String.join(" ", wrappedInShell));
+            log.warn("" +
+                             "dont have a reaper context, so the build " +
+                             "can leave zombie processes behind " +
+                             "(not yet implemented, see tini for linux)");
+            return new ProcessBuilder(wrappedInShell);
+        }
 
-        String[] wrappedInShell = new String[]{"/home/lars/Downloads/tini", "-s", "-vvvv", "-w", "-g", "sh"};
-        log.debug("raw command is '{}'", String.join(" ", wrappedInShell));
-        return new ProcessBuilder(wrappedInShell);
+        log.error("your operating system is not supported (yet), consider a PR");
+        System.exit(1);
+        return null;
+    }
+
+    private void prepareTini(ProcessBuilder processBuilder) {
+        val path = System.getProperty("PATH");
+        val tinitDownloader = new TiniDownloader(path);
+        if (tinitDownloader.hasTini()) {
+            log.debug("has tini in PATH");
+        } else {
+            log.debug("download tini");
+            // TODO too specific to maven
+            val tiniPath = Paths.get("target", "bin");
+            new File(tiniPath.toFile().getAbsolutePath()).mkdirs();
+            tinitDownloader.download(tiniPath.resolve("tini"));
+
+            val environment = processBuilder.environment();
+            val PATH = environment.get("PATH");
+            environment.put(PATH, String.join(":", tiniPath.toFile().getAbsolutePath(), PATH));
+        }
+    }
+
+    private static class OSDetector {
+        private OSDetector() {
+        }
+
+        private static final String OS = System.getProperty("os.name").toLowerCase();
+
+        boolean isMac() {
+            return OS.contains("mac");
+        }
+
+        boolean isLinux() {
+            return OS.contains("linux");
+        }
     }
 }

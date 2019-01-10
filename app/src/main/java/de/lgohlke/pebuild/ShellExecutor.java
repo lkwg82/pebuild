@@ -149,7 +149,7 @@ class ShellExecutor extends StepExecutor {
     }
 
     private void prepareTini(ProcessBuilder processBuilder) {
-        val path = System.getProperty("PATH");
+        val path = System.getenv("PATH");
         val tinitDownloader = new TiniDownloader(path);
         if (tinitDownloader.hasTini()) {
             log.debug("has tini in PATH");
@@ -162,7 +162,9 @@ class ShellExecutor extends StepExecutor {
 
             val environment = processBuilder.environment();
             val PATH = environment.get("PATH");
-            environment.put(PATH, String.join(":", tiniPath.toFile().getAbsolutePath(), PATH));
+            val newPATH = String.join(":", tiniPath.toFile().getAbsolutePath(), PATH);
+            log.debug("new PATH with tini:{}", newPATH);
+            environment.put("PATH", newPATH);
         }
     }
 

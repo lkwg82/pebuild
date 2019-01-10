@@ -5,12 +5,15 @@ import de.lgohlke.streamutils.PrefixedInputStream;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.StringWriter;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -33,6 +36,14 @@ class ShellExecutor extends StepExecutor {
     public ExecutionResult runCommand() throws Exception {
         Process process = startProcess();
         Path outputFile = prepareOutputFile();
+
+        if (!process.isAlive()) {
+            // TODO needs test
+            StringWriter errOutput = new StringWriter();
+            IOUtils.copy(process.getErrorStream(), errOutput, Charset.defaultCharset());
+            log.error("failed to start: {}", errOutput.toString());
+            return new ExecutionResult(process.exitValue(), "");
+        }
 
         try (val fout = new FileOutputStream(outputFile.toFile())) {
             PrefixedInputStream stdout = new PrefixedInputStream(process.getInputStream(), "STDOUT");
@@ -113,24 +124,28 @@ class ShellExecutor extends StepExecutor {
         log.debug("starting");
         Process process = processBuilder.start();
 
-        log.debug("raw input: {}", getCommand());
-        String rawInput = getCommand() + "\n";
-        byte[] cmd = rawInput.getBytes();
+        if (process.isAlive()) {
+            log.debug("raw input: {}", getCommand());
+            String rawInput = getCommand() + "\n";
+            byte[] cmd = rawInput.getBytes();
 
-        try (val outputStream = process.getOutputStream()) {
-            outputStream.write(cmd);
+            try (val outputStream = process.getOutputStream()) {
+                outputStream.write(cmd);
+            }
+        } else {
+            log.warn("process already exited with code: {}", process.exitValue());
         }
         return process;
+
     }
 
     private ProcessBuilder prepareExecutionContext() {
         val osDetector = new OSDetector();
         if (osDetector.isLinux()) {
-            String[] wrappedInShell = new String[]{"tini", "-s", "-vvvv", "-w", "-g", "sh"};
+            val pathToTini = prepareTini();
+            String[] wrappedInShell = new String[]{pathToTini, "-s", "-vvvv", "-w", "-g", "sh"};
             log.debug("raw command is '{}'", String.join(" ", wrappedInShell));
-            val processBuilder = new ProcessBuilder(wrappedInShell);
-            prepareTini(processBuilder);
-            return processBuilder;
+            return new ProcessBuilder(wrappedInShell);
         }
 
         if (osDetector.isMac()) {
@@ -148,23 +163,22 @@ class ShellExecutor extends StepExecutor {
         return null;
     }
 
-    private void prepareTini(ProcessBuilder processBuilder) {
+    private String prepareTini() {
         val path = System.getenv("PATH");
         val tinitDownloader = new TiniDownloader(path);
-        if (tinitDownloader.hasTini()) {
-            log.debug("has tini in PATH");
+        val found_path = tinitDownloader.tiniPath();
+        if (found_path.getFirst()) {
+            log.debug("has tini in PATH:{}", found_path.getSecond());
+            return found_path.getSecond();
         } else {
             log.debug("download tini");
             // TODO too specific to maven
             val tiniPath = Paths.get("target", "bin");
             new File(tiniPath.toFile().getAbsolutePath()).mkdirs();
-            tinitDownloader.download(tiniPath.resolve("tini"));
+            Path pathToTini = tiniPath.resolve("tini");
+            tinitDownloader.download(pathToTini);
 
-            val environment = processBuilder.environment();
-            val PATH = environment.get("PATH");
-            val newPATH = String.join(":", tiniPath.toFile().getAbsolutePath(), PATH);
-            log.debug("new PATH with tini:{}", newPATH);
-            environment.put("PATH", newPATH);
+            return pathToTini.toFile().getAbsolutePath();
         }
     }
 

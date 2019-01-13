@@ -15,7 +15,7 @@ class PELogger(private val clazz: String,
 
     val logPrefix = "org.slf4j.simpleLogger"
     private val level = lazyInitLogLevel()
-    private val dateFormat = SimpleDateFormat("HH:MM:ss:SSS")
+    private val dateFormat = SimpleDateFormat("HH:mm:ss:SSS")
 
     private val formattedDate: String
         get() {
@@ -153,7 +153,7 @@ class PELogger(private val clazz: String,
     }
 
     override fun isDebugEnabled(): Boolean {
-        throw TODO()
+        return isLevelEnabled(DEBUG)
     }
 
     override fun debug(msg: String) {
@@ -216,7 +216,7 @@ class PELogger(private val clazz: String,
     }
 
     override fun isInfoEnabled(): Boolean {
-        throw TODO()
+        return isLevelEnabled(INFO)
     }
 
     override fun info(msg: String) {
@@ -300,7 +300,7 @@ class PELogger(private val clazz: String,
     }
 
     override fun isWarnEnabled(): Boolean {
-        throw TODO()
+        return isLevelEnabled(WARN)
     }
 
     override fun warn(msg: String) {
@@ -314,18 +314,18 @@ class PELogger(private val clazz: String,
 
     override fun warn(format: String,
                       vararg arguments: Any) {
-        throw TODO()
+        logAndFormat(WARN, format, arguments)
     }
 
     override fun warn(format: String,
                       arg1: Any,
                       arg2: Any) {
-        throw TODO()
+        logAndFormat(WARN, format, arg1, arg2)
     }
 
     override fun warn(msg: String,
                       t: Throwable) {
-        throw TODO()
+        logAndFormat(WARN, msg, t)
     }
 
     override fun isWarnEnabled(marker: Marker): Boolean {
@@ -363,7 +363,7 @@ class PELogger(private val clazz: String,
     }
 
     override fun isErrorEnabled(): Boolean {
-        throw TODO()
+        return isLevelEnabled(ERROR)
     }
 
     override fun error(msg: String) {

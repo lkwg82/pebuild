@@ -39,7 +39,7 @@ public abstract class StepExecutor {
 
             jobTrigger.triggerCompletion(timingContext);
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t.getMessage(), t);
         }
     }
 

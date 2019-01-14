@@ -78,7 +78,7 @@ public class ReactorTest {
 
     @Test
     void blocking() throws InterruptedException {
-        val blocking = Mono.fromRunnable(() -> blockingMethod())
+        val blocking = Mono.fromRunnable(this::blockingMethod)
                            .subscribeOn(elastic());
 
         log.warn("subscribe");

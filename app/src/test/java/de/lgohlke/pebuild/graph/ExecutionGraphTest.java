@@ -101,7 +101,7 @@ class ExecutionGraphTest {
             @Override
             public ExecutionResult runCommand() throws Exception {
                 TimeUnit.MILLISECONDS.sleep(delay);
-                return new ExecutionResult(0, "");
+                return new ExecutionResult(0);
             }
         };
     }

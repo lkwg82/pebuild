@@ -6,6 +6,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,6 +18,7 @@ import java.util.Random;
 
 import static java.time.Duration.ZERO;
 import static org.assertj.core.api.Assertions.assertThat;
+import static reactor.core.scheduler.Schedulers.elastic;
 
 class ShellExecutorIT {
 
@@ -33,7 +36,7 @@ class ShellExecutorIT {
     void setUp() throws IOException {
         tempDirectory = Files.createTempDirectory(new Random().nextInt() + "");
         Configuration.REPORT_DIRECTORY.overwrite(tempDirectory.toAbsolutePath()
-                                                         .toString());
+                .toString());
     }
 
     @AfterEach
@@ -58,7 +61,7 @@ class ShellExecutorIT {
     @Test
     void shouldLazyCreateReportDirectoryIfMissing() throws Exception {
         Configuration.REPORT_DIRECTORY.overwrite(tempDirectory.toAbsolutePath()
-                                                         .toString() + "/x/s");
+                .toString() + "/x/s");
 
         val shellExecutor = new ShellExecutor("test", "env", ZERO, trigger);
 
@@ -93,5 +96,27 @@ class ShellExecutorIT {
 
             assertThat(result.getExitCode()).isEqualTo(128 + 15);
         }
+    }
+
+    @Test
+    void shouldCancel() throws Exception {
+        val command = "sleep 20";
+        val shellExecutor = new ShellExecutor("test", command, ZERO, trigger, true);
+
+        Mono<Object> execution = Mono.fromRunnable(() -> {
+            try {
+                shellExecutor.runCommand();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        execution.subscribeOn(elastic()).subscribe();
+
+        StepVerifier.create(shellExecutor.getResults())
+                .then(shellExecutor::cancel)
+                .expectNext(new ExecutionResult(143))
+                .expectComplete()
+                .verify();
     }
 }

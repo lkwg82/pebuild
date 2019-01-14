@@ -57,14 +57,19 @@ public abstract class StepExecutor {
     @Override
     public String toString() {
         String dependsOn = "[" + waitForJobs.stream()
-                                            .sorted(Comparator.comparing(o -> o.getName()
-                                                                               .toLowerCase()))
-                                            .map(StepExecutor::getName)
-                                            .collect(Collectors.joining(",")) + "]";
+                .sorted(Comparator.comparing(o -> o.getName()
+                        .toLowerCase()))
+                .map(StepExecutor::getName)
+                .collect(Collectors.joining(",")) + "]";
         return name + " " + dependsOn;
     }
 
     public Set<StepExecutor> getWaitForJobs() {
         return new HashSet<>(waitForJobs);
+    }
+
+    public void cancel() {
+        // TODO
+        log.warn("cancel");
     }
 }

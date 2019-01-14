@@ -2,26 +2,30 @@ package de.lgohlke.pebuild;
 
 import de.lgohlke.streamutils.MergingStreamFascade;
 import de.lgohlke.streamutils.PrefixedInputStream;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
+import reactor.core.publisher.DirectProcessor;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 class ShellExecutor extends StepExecutor {
+    private final AtomicBoolean canceled = new AtomicBoolean(false);
+    @Getter
+    private final DirectProcessor<ExecutionResult> results = DirectProcessor.create();
+
     private final boolean syncAfter;
+    private Process process;
 
     ShellExecutor(String name, String command, Duration timeout, JobTrigger jobTrigger) {
         this(name, command, timeout, jobTrigger, false);
@@ -34,7 +38,7 @@ class ShellExecutor extends StepExecutor {
 
     @Override
     public ExecutionResult runCommand() throws Exception {
-        Process process = startProcess();
+        process = startProcess();
         Path outputFile = prepareOutputFile();
 
         if (!process.isAlive()) {
@@ -42,7 +46,7 @@ class ShellExecutor extends StepExecutor {
             StringWriter errOutput = new StringWriter();
             IOUtils.copy(process.getErrorStream(), errOutput, Charset.defaultCharset());
             log.error("failed to start: {}", errOutput.toString());
-            return new ExecutionResult(process.exitValue(), "");
+            return new ExecutionResult(process.exitValue());
         }
 
         try (val fout = new FileOutputStream(outputFile.toFile())) {
@@ -61,7 +65,10 @@ class ShellExecutor extends StepExecutor {
                     log.warn("blocking sub process: '{}'", getCommand());
                 }
 
-                return new ExecutionResult(exitCode, "");
+                ExecutionResult executionResult = new ExecutionResult(exitCode);
+                results.onNext(executionResult);
+                results.onComplete();
+                return executionResult;
             } finally {
                 // this is only for tests when immediately the output needs to be verified
                 if (syncAfter) {
@@ -71,6 +78,11 @@ class ShellExecutor extends StepExecutor {
                 }
             }
         }
+    }
+
+    @Override
+    public void cancel() {
+        process.destroy();
     }
 
     private int waitForProcess(Process process) throws InterruptedException {
@@ -154,9 +166,9 @@ class ShellExecutor extends StepExecutor {
             String[] wrappedInShell = new String[]{"sh"};
             log.debug("raw command is '{}'", String.join(" ", wrappedInShell));
             log.warn("" +
-                             "dont have a reaper context, so the build " +
-                             "can leave zombie processes behind " +
-                             "(not yet implemented, see tini for linux)");
+                    "dont have a reaper context, so the build " +
+                    "can leave zombie processes behind " +
+                    "(not yet implemented, see tini for linux)");
             return new ProcessBuilder(wrappedInShell);
         }
 

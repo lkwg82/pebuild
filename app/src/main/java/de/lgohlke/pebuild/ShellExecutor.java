@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 class ShellExecutor extends StepExecutor {
-    private final AtomicBoolean canceled = new AtomicBoolean(false);
     @Getter
     private final DirectProcessor<ExecutionResult> results = DirectProcessor.create();
 
@@ -46,7 +45,9 @@ class ShellExecutor extends StepExecutor {
             StringWriter errOutput = new StringWriter();
             IOUtils.copy(process.getErrorStream(), errOutput, Charset.defaultCharset());
             log.error("failed to start: {}", errOutput.toString());
-            return new ExecutionResult(process.exitValue());
+            val result = new ExecutionResult(process.exitValue());
+            process = null;
+            return result;
         }
 
         try (val fout = new FileOutputStream(outputFile.toFile())) {
@@ -68,6 +69,7 @@ class ShellExecutor extends StepExecutor {
                 ExecutionResult executionResult = new ExecutionResult(exitCode);
                 results.onNext(executionResult);
                 results.onComplete();
+                process = null;
                 return executionResult;
             } finally {
                 // this is only for tests when immediately the output needs to be verified
@@ -82,6 +84,10 @@ class ShellExecutor extends StepExecutor {
 
     @Override
     public void cancel() {
+        if (null == process) {
+            log.debug("tried to cancel a not running instance");
+            return;
+        }
         process.destroy();
     }
 

@@ -1,5 +1,6 @@
 package de.lgohlke.pebuild;
 
+import lombok.SneakyThrows;
 import lombok.val;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -15,12 +16,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import static java.time.Duration.ZERO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static reactor.core.scheduler.Schedulers.elastic;
 
 class ShellExecutorIT {
+
+    public static final Duration WAIT_MAX_500_MS = Duration.ofMillis(500);
 
     static {
         System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.Channel", "DEBUG");
@@ -68,13 +72,30 @@ class ShellExecutorIT {
         shellExecutor.runCommand();
     }
 
-    @Test
-    void shouldPropagateExitCode() throws Exception {
-        val shellExecutor = new ShellExecutor("test", "exit 23", ZERO, trigger);
+    @Nested
+    class exitCodes {
 
-        val result = shellExecutor.runCommand();
+        @Test
+        void shouldPropagateExitCodeOnFailedCommand() throws Exception {
+            val shellExecutor = new ShellExecutor("test", "exit 23", ZERO, trigger);
 
-        assertThat(result.getExitCode()).isEqualTo(23);
+            StepVerifier.create(shellExecutor.getResults())
+                    .then(() -> execute(shellExecutor))
+                    .expectNext(new ExecutionResult(23))
+                    .expectComplete()
+                    .verify(WAIT_MAX_500_MS);
+        }
+
+        @Test
+        void shouldPropagateExitCodeOnWrongCommand() throws Exception {
+            val shellExecutor = new ShellExecutor("test", "kjakdhaksdhk", ZERO, trigger);
+
+            StepVerifier.create(shellExecutor.getResults())
+                    .then(() -> execute(shellExecutor))
+                    .expectNext(new ExecutionResult(127))
+                    .expectComplete()
+                    .verify(WAIT_MAX_500_MS);
+        }
     }
 
     @Nested
@@ -83,40 +104,74 @@ class ShellExecutorIT {
         void exitsBeforeTimeout() throws Exception {
             val shellExecutor = new ShellExecutor("test", "exit 3", Duration.ofSeconds(1), trigger);
 
-            val result = shellExecutor.runCommand();
-
-            assertThat(result.getExitCode()).isEqualTo(3);
+            StepVerifier.create(shellExecutor.getResults())
+                    .then(() -> execute(shellExecutor))
+                    .expectNext(new ExecutionResult(3))
+                    .expectComplete()
+                    .verify(WAIT_MAX_500_MS);
         }
 
         @Test
         void exitsWithTimeoutButProcessIsKindOfBlocking() throws Exception {
-            val shellExecutor = new ShellExecutor("test", "sleep 777", Duration.ofSeconds(1), trigger);
+            val shellExecutor = new ShellExecutor("test", "sleep 777", Duration.ofMillis(100), trigger);
 
-            val result = shellExecutor.runCommand();
-
-            assertThat(result.getExitCode()).isEqualTo(128 + 15);
+            StepVerifier.create(shellExecutor.getResults())
+                    .then(() -> execute(shellExecutor))
+                    .expectNext(new ExecutionResult(128 + 15))
+                    .expectComplete()
+                    .verify(WAIT_MAX_500_MS);
         }
     }
 
-    @Test
-    void shouldCancel() throws Exception {
-        val command = "sleep 20";
-        val shellExecutor = new ShellExecutor("test", command, ZERO, trigger, true);
+    @Nested
+    class cancelation {
+        private ShellExecutor shellExecutor;
 
-        Mono<Object> execution = Mono.fromRunnable(() -> {
+        @BeforeEach
+        void setUp() {
+            shellExecutor = new ShellExecutor("test", "sleep 20", ZERO, trigger, true);
+        }
+
+        @Test
+        void shouldCancel() throws Exception {
+            StepVerifier.create(shellExecutor.getResults())
+                    .then(() -> execute(shellExecutor))
+                    .then(shellExecutor::cancel)
+                    .expectNext(new ExecutionResult(143))
+                    .expectComplete()
+                    .verify(WAIT_MAX_500_MS);
+        }
+
+        @Test
+        void shouldNotFailOnCancelNotRunningProcess() throws Exception {
+            shellExecutor.cancel();
+        }
+
+        @Test
+        void shouldNotFailCancelTwice() throws Exception {
+            StepVerifier.create(shellExecutor.getResults())
+                    .then(() -> execute(shellExecutor))
+                    .then(shellExecutor::cancel)
+                    .then(shellExecutor::cancel)
+                    .expectNext(new ExecutionResult(143))
+                    .expectComplete()
+                    .verify(WAIT_MAX_500_MS);
+        }
+    }
+
+    @SneakyThrows
+    private void execute(ShellExecutor shellExecutor) {
+        execution(shellExecutor).subscribeOn(elastic()).subscribe();
+        TimeUnit.MILLISECONDS.sleep((long) 150);
+    }
+
+    private Mono<Object> execution(ShellExecutor shellExecutor) {
+        return Mono.fromRunnable(() -> {
             try {
                 shellExecutor.runCommand();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
-
-        execution.subscribeOn(elastic()).subscribe();
-
-        StepVerifier.create(shellExecutor.getResults())
-                .then(shellExecutor::cancel)
-                .expectNext(new ExecutionResult(143))
-                .expectComplete()
-                .verify();
     }
 }

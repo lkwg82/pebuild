@@ -7,6 +7,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -40,7 +41,7 @@ class ShellExecutorIT {
     void setUp() throws IOException {
         tempDirectory = Files.createTempDirectory(new Random().nextInt() + "");
         Configuration.REPORT_DIRECTORY.overwrite(tempDirectory.toAbsolutePath()
-                .toString());
+                                                              .toString());
     }
 
     @AfterEach
@@ -65,7 +66,7 @@ class ShellExecutorIT {
     @Test
     void shouldLazyCreateReportDirectoryIfMissing() throws Exception {
         Configuration.REPORT_DIRECTORY.overwrite(tempDirectory.toAbsolutePath()
-                .toString() + "/x/s");
+                                                              .toString() + "/x/s");
 
         val shellExecutor = new ShellExecutor("test", "env", ZERO, trigger);
 
@@ -80,10 +81,10 @@ class ShellExecutorIT {
             val shellExecutor = new ShellExecutor("test", "exit 23", ZERO, trigger);
 
             StepVerifier.create(shellExecutor.getResults())
-                    .then(() -> execute(shellExecutor))
-                    .expectNext(new ExecutionResult(23))
-                    .expectComplete()
-                    .verify(WAIT_MAX_500_MS);
+                        .then(() -> execute(shellExecutor))
+                        .expectNext(new ExecutionResult(23))
+                        .expectComplete()
+                        .verify(WAIT_MAX_500_MS);
         }
 
         @Test
@@ -91,10 +92,10 @@ class ShellExecutorIT {
             val shellExecutor = new ShellExecutor("test", "kjakdhaksdhk", ZERO, trigger);
 
             StepVerifier.create(shellExecutor.getResults())
-                    .then(() -> execute(shellExecutor))
-                    .expectNext(new ExecutionResult(127))
-                    .expectComplete()
-                    .verify(WAIT_MAX_500_MS);
+                        .then(() -> execute(shellExecutor))
+                        .expectNext(new ExecutionResult(127))
+                        .expectComplete()
+                        .verify(WAIT_MAX_500_MS);
         }
     }
 
@@ -105,10 +106,10 @@ class ShellExecutorIT {
             val shellExecutor = new ShellExecutor("test", "exit 3", Duration.ofSeconds(1), trigger);
 
             StepVerifier.create(shellExecutor.getResults())
-                    .then(() -> execute(shellExecutor))
-                    .expectNext(new ExecutionResult(3))
-                    .expectComplete()
-                    .verify(WAIT_MAX_500_MS);
+                        .then(() -> execute(shellExecutor))
+                        .expectNext(new ExecutionResult(3))
+                        .expectComplete()
+                        .verify(WAIT_MAX_500_MS);
         }
 
         @Test
@@ -116,10 +117,10 @@ class ShellExecutorIT {
             val shellExecutor = new ShellExecutor("test", "sleep 777", Duration.ofMillis(100), trigger);
 
             StepVerifier.create(shellExecutor.getResults())
-                    .then(() -> execute(shellExecutor))
-                    .expectNext(new ExecutionResult(128 + 15))
-                    .expectComplete()
-                    .verify(WAIT_MAX_500_MS);
+                        .then(() -> execute(shellExecutor))
+                        .expectNext(new ExecutionResult(128 + 15))
+                        .expectComplete()
+                        .verify(WAIT_MAX_500_MS);
         }
     }
 
@@ -135,11 +136,11 @@ class ShellExecutorIT {
         @Test
         void shouldCancel() throws Exception {
             StepVerifier.create(shellExecutor.getResults())
-                    .then(() -> execute(shellExecutor))
-                    .then(shellExecutor::cancel)
-                    .expectNext(new ExecutionResult(143))
-                    .expectComplete()
-                    .verify(WAIT_MAX_500_MS);
+                        .then(() -> execute(shellExecutor))
+                        .then(shellExecutor::cancel)
+                        .expectNext(new ExecutionResult(143))
+                        .expectComplete()
+                        .verify(WAIT_MAX_500_MS);
         }
 
         @Test
@@ -150,18 +151,19 @@ class ShellExecutorIT {
         @Test
         void shouldNotFailCancelTwice() throws Exception {
             StepVerifier.create(shellExecutor.getResults())
-                    .then(() -> execute(shellExecutor))
-                    .then(shellExecutor::cancel)
-                    .then(shellExecutor::cancel)
-                    .expectNext(new ExecutionResult(143))
-                    .expectComplete()
-                    .verify(WAIT_MAX_500_MS);
+                        .then(() -> execute(shellExecutor))
+                        .then(shellExecutor::cancel)
+                        .then(shellExecutor::cancel)
+                        .expectNext(new ExecutionResult(143))
+                        .expectComplete()
+                        .verify(WAIT_MAX_500_MS);
         }
     }
 
     @SneakyThrows
     private void execute(ShellExecutor shellExecutor) {
-        execution(shellExecutor).subscribeOn(elastic()).subscribe();
+        Flux.defer(() -> execution(shellExecutor).subscribeOn(elastic()))
+            .subscribe();
         TimeUnit.MILLISECONDS.sleep((long) 150);
     }
 

@@ -7,7 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.DirectProcessor;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.time.Duration.ofMillis;
 import static reactor.core.scheduler.Schedulers.elastic;
 import static reactor.core.scheduler.Schedulers.parallel;
 
@@ -30,7 +33,7 @@ public class ReactorTest {
         DirectProcessor<Job> allJobs = DirectProcessor.create();
 
         allJobs
-                .timeout(Duration.ofMillis(800))
+                .timeout(ofMillis(800))
 //                .log(null, Level.WARNING)
                 .doOnTerminate(() -> {
                     log.warn("TERMINATE");
@@ -87,6 +90,35 @@ public class ReactorTest {
 
         TimeUnit.MILLISECONDS.sleep(200);
         log.warn("end test");
+    }
+
+    @Test
+    void waitForSlowProducer() {
+        val slow = Flux.range(0, 3).delayElements(ofMillis(200)).map(i -> "200 " + i);
+        val fast = Flux.range(0, 3).delayElements(ofMillis(100)).map(i -> "100 " + i);
+
+        val merge = Flux.merge(slow, fast);
+
+        StepVerifier.create(merge)
+                    .expectNext("100 0", "200 0", "100 1", "100 2", "200 1", "200 2")
+                    .expectComplete()
+                    .verifyThenAssertThat(Duration.ofSeconds(1));
+    }
+
+    @Test
+    void producerChain() {
+        // a -> b -> [c,d]
+        // d -> e
+        val a = Flux.just("a").delayElements(ofMillis(200));
+        val b = Flux.just("b").delayElements(ofMillis(100));
+        val c = Flux.just("c").delayElements(ofMillis(50));
+
+        val flux = Flux.concat(a, b, c);
+
+        StepVerifier.create(flux)
+                    .expectNext("a", "b", "c")
+                    .expectComplete()
+                    .verifyThenAssertThat(Duration.ofSeconds(1));
     }
 
     private void blockingMethod() {

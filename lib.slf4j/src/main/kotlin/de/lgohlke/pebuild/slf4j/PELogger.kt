@@ -383,12 +383,12 @@ class PELogger(private val clazz: String,
 
     override fun error(format: String,
                        vararg arguments: Any) {
-        throw TODO()
+        logAndFormat(ERROR, format, arguments)
     }
 
     override fun error(msg: String,
                        t: Throwable) {
-        throw TODO()
+        logAndFormat(ERROR, msg, t)
     }
 
     override fun isErrorEnabled(marker: Marker): Boolean {

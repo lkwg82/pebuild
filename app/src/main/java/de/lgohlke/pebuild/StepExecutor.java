@@ -48,7 +48,7 @@ public abstract class StepExecutor {
         return null;
     }
 
-    public void waitFor(StepExecutor executor) {
+    public void waitFor(@NonNull StepExecutor executor) {
         if (!waitForJobs.add(executor)) {
             throw new IllegalArgumentException("tried to add this executor again: " + executor);
         }
@@ -57,10 +57,10 @@ public abstract class StepExecutor {
     @Override
     public String toString() {
         String dependsOn = "[" + waitForJobs.stream()
-                .sorted(Comparator.comparing(o -> o.getName()
-                        .toLowerCase()))
-                .map(StepExecutor::getName)
-                .collect(Collectors.joining(",")) + "]";
+                                            .sorted(Comparator.comparing(o -> o.getName()
+                                                                               .toLowerCase()))
+                                            .map(StepExecutor::getName)
+                                            .collect(Collectors.joining(",")) + "]";
         return name + " " + dependsOn;
     }
 

@@ -11,14 +11,17 @@ import reactor.core.CoreSubscriber
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
-import reactor.test.StepVerifier
+import reactor.core.scheduler.Schedulers.elastic
+import reactor.core.scheduler.Schedulers.parallel
 import reactor.test.test
+import java.lang.IllegalStateException
 import java.time.Duration
-import java.util.ArrayList
-import java.util.LinkedHashSet
+import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.LongAdder
 import java.util.logging.Level
+import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.set
 
@@ -26,16 +29,15 @@ class ExecutionGraph2Test {
     private val root = Node("root", setOf(), true)
     private val nodes = ArrayList<Node>()
 
+    private val a = Node("A", root)
+    private val c = Node("C", a)
+    private val e = Node("E", a, c)
+    private val d = Node("D", e)
+    private val f = Node("F", e)
+    private val b = Node("B", e, f)
+
     @BeforeEach
     internal fun setUp() {
-
-        val a = Node("A", root)
-        val c = Node("C", a)
-        val e = Node("E", a, c)
-        val d = Node("D", e)
-        val f = Node("F", e)
-        val b = Node("B", e, f)
-
         nodes.addAll(setOf(a, b, c, d, e, f))
 
         val endNodes = createSuccessorMap()
@@ -79,41 +81,42 @@ class ExecutionGraph2Test {
 
     @Test
     fun `should execute in correct order`() {
+        val executedNodes = Collections.synchronizedList(ArrayList<Node>())
+        val cachedNodes = nodes.map { n ->
+            n to Mono.just(n).doOnSubscribe {
+                n.execute()
+                executedNodes.add(n)
+            }.cache()
+        }.toMap()
         val jobs = convertNodesToStepExecutor(nodes)
         val sortedJobs = TopologicalSorter.sort(jobs)
         val sortedNodes = convertSortedJobsToNodeList(sortedJobs)
 //        println(sortedJobs)
-        println(sortedNodes)
+        // println(sortedNodes)
 
         val end = nodes.last()
 
-        println()
-        val fluxTree = creatFluxTree(end).log(null, Level.WARNING)
-//                .subscribeOn(elastic())
+        val fluxTree = createFluxTree(end, cachedNodes)//.log(null, Level.WARNING)
+                .subscribeOn(parallel())
 
-        StepVerifier
-                .create(fluxTree)
-                .expectNext("root", "a")
-                .expectNext("root", "a", "c", "e")
-                .expectNext("root", "a")
-                .expectNext("root", "a", "c", "e", "f", "b")
-                .expectNext("root", "a")
-                .expectNext("root", "a", "c", "e", "d")
-                .expectNext("end")
-                .expectComplete()
-                .verifyThenAssertThat(Duration.ofMillis(600))
+        fluxTree.subscribe()
+
+        TimeUnit.MILLISECONDS.sleep(500)
+
+        assertThat(executedNodes).startsWith(root, a, c, e, f, b, d)
     }
 
-    private fun creatFluxTree(node: Node): Flux<String> {
+    private fun createFluxTree(node: Node, cachedNodes: Map<Node, Mono<Node>>): Flux<Node> {
+        val thisNode = cachedNodes[node]?.toFlux() ?: throw IllegalStateException("missing node in cached map: $node")
         return if (node.predecessors.isEmpty()) {
-            println("last node: $node")
-            node.cache().toFlux()
+            //println("last node: $node")
+            thisNode
         } else {
-            println("predecessors $node -> ${node.predecessors}")
+            //println("predecessors $node -> ${node.predecessors}")
 
-            val preFluxes = node.predecessors.map { p -> creatFluxTree(p) }
+            val preFluxes = node.predecessors.map { p -> createFluxTree(p, cachedNodes) }
             val merge = Flux.merge(Flux.fromIterable(preFluxes))
-            Flux.concat(merge, node)
+            Flux.concat(merge, thisNode)
         }
     }
 
@@ -139,7 +142,6 @@ class ExecutionGraph2Test {
             }
         }
 
-
         return jobs.values
     }
 
@@ -150,7 +152,6 @@ class ExecutionGraph2Test {
             command,
             timeout,
             jobTrigger)
-
 
     private fun createSuccessorMap(): Map<Node, Set<Node>> {
         val successorMap = LinkedHashMap<Node, MutableSet<Node>>()
@@ -169,30 +170,19 @@ class ExecutionGraph2Test {
 
     class Node(internal val name: String,
                val predecessors: Set<Node> = setOf(),
-               private var terminated: Boolean = false) : Mono<String>() {
+               private var terminated: Boolean = false) {
 
         constructor(name: String, vararg predecessors: Node) : this(name, predecessors.toSet())
-
-        private val executed = AtomicBoolean(false)
 
         companion object {
             private val log = LoggerFactory.getLogger(this::class.java)
         }
 
-        override fun subscribe(actual: CoreSubscriber<in String>) {
-            if (executed.compareAndSet(false, true)) {
-                execute()
-                actual.onNext(name.toLowerCase())
-                actual.onComplete()
-            } else {
-                log.warn("tried executing $name")
-            }
-        }
-
-        private fun execute() {
+        fun execute() {
             val t = Thread.currentThread()
                     .name
             log.warn("execute {} on {}", name, t)
+            TimeUnit.MILLISECONDS.sleep(70)
         }
 
         override fun toString(): String {

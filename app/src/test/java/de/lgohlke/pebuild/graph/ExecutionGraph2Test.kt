@@ -12,10 +12,12 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
 import reactor.test.StepVerifier
+import reactor.test.test
 import java.time.Duration
 import java.util.ArrayList
 import java.util.LinkedHashSet
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.LongAdder
 import java.util.logging.Level
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.set
@@ -53,6 +55,29 @@ class ExecutionGraph2Test {
     }
 
     @Test
+    fun cachedMono() {
+        val counter = LongAdder()
+        val mono = object : Mono<String>() {
+            override fun subscribe(p0: CoreSubscriber<in String>) {
+                counter.increment()
+                p0.onNext("executed " + counter.toInt())
+                p0.onComplete()
+            }
+        }
+
+        val cache = mono.cache()
+
+        cache.test()
+                .expectNext("executed 1")
+                .expectComplete()
+                .verifyThenAssertThat(Duration.ofMillis(300))
+        cache.test()
+                .expectNext("executed 1")
+                .expectComplete()
+                .verifyThenAssertThat(Duration.ofMillis(300))
+    }
+
+    @Test
     fun `should execute in correct order`() {
         val jobs = convertNodesToStepExecutor(nodes)
         val sortedJobs = TopologicalSorter.sort(jobs)
@@ -82,8 +107,7 @@ class ExecutionGraph2Test {
     private fun creatFluxTree(node: Node): Flux<String> {
         return if (node.predecessors.isEmpty()) {
             println("last node: $node")
-            node.toFlux()
-                    .cache()
+            node.cache().toFlux()
         } else {
             println("predecessors $node -> ${node.predecessors}")
 
@@ -123,9 +147,9 @@ class ExecutionGraph2Test {
                             command: @NonNull String = "",
                             timeout: @NonNull Duration = Duration.ZERO,
                             jobTrigger: @NonNull JobTrigger = JobTrigger("")) : StepExecutor(name,
-                                                                                             command,
-                                                                                             timeout,
-                                                                                             jobTrigger)
+            command,
+            timeout,
+            jobTrigger)
 
 
     private fun createSuccessorMap(): Map<Node, Set<Node>> {

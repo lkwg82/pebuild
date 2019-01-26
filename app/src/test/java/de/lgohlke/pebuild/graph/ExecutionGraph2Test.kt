@@ -108,10 +108,9 @@ class ExecutionGraph2Test {
 
         s2.waitFor(s1)
 
-        val graph = ExecutionGraph.Builder().addJob(s1).addJob(s2).build()
-        graph.execute()
+        ExecutionGraph2.Builder().addJob(s1).addJob(s2).build().execute()
 
-        assertThat(executions).isEqualTo(listOf("root", "s1", "s2", "end"))
+        assertThat(executions).isEqualTo(listOf("s1", "s2"))
     }
 
     class DummyExecutor(private val name2: String, private val executions: MutableList<String>) :
@@ -167,6 +166,66 @@ class ExecutionGraph2Test {
                 str += "*"
             }
             return str
+        }
+    }
+}
+
+class ExecutionGraph2(private val executors: Collection<StepExecutor>, val theFinalStep: StepExecutor) {
+    fun execute() {
+        val cachedNodes = executors.map { executor ->
+            executor to Mono.just(executor).doOnSubscribe {
+                executor.execute()
+            }.cache()
+        }.toMap()
+
+        val graph = createExecutionGraph(theFinalStep, cachedNodes).log(null, Level.WARNING)
+
+        graph.subscribeOn(parallel())
+                .subscribe { v -> print(" $v ->") }
+    }
+
+    private fun createExecutionGraph(node: StepExecutor, cachedNodes: Map<StepExecutor, Mono<StepExecutor>>): Flux<StepExecutor> {
+        val thisNode = cachedNodes[node]?.toFlux() ?: throw IllegalStateException("missing node in cached map: $node")
+        val preFluxes = node.waitForJobs.map { predecessor -> createExecutionGraph(predecessor, cachedNodes) }
+        val merge = Flux.merge(Flux.fromIterable(preFluxes))
+        return Flux.concat(merge, thisNode)
+    }
+
+    class Builder {
+        private val executors = ArrayList<StepExecutor>()
+        fun addJob(executor: StepExecutor): Builder {
+            executors.add(executor)
+            return this
+        }
+
+        private fun createFinalStep(executors: Collection<StepExecutor>): StepExecutor {
+            val finalSteps = createSuccessorMap(executors)
+                    .filter { (_, successors) -> successors.isEmpty() }
+                    .map { (node, _) -> node }
+            val theFinalStep = object : StepExecutor("end", "", ZERO, JobTrigger("end")) {}
+            finalSteps.forEach { step -> theFinalStep.waitFor(step) }
+            return theFinalStep
+        }
+
+        private fun createSuccessorMap(steps: Collection<StepExecutor>): Map<StepExecutor, Set<StepExecutor>> {
+            val successorMap = LinkedHashMap<StepExecutor, MutableSet<StepExecutor>>()
+
+            steps.forEach { step ->
+                successorMap[step] = LinkedHashSet()
+            }
+
+            steps.forEach { step ->
+                step.waitForJobs.forEach { s ->
+                    successorMap[s]?.add(step)
+                }
+            }
+            return successorMap
+        }
+
+        fun build(): ExecutionGraph2 {
+            val theFinalStep = createFinalStep(executors)
+            executors.add(theFinalStep)
+            return ExecutionGraph2(executors, theFinalStep)
         }
     }
 }

@@ -1,8 +1,8 @@
 package de.lgohlke.pebuild.graph
 
+import de.lgohlke.pebuild.ExecutionResult
 import de.lgohlke.pebuild.JobTrigger
 import de.lgohlke.pebuild.StepExecutor
-import lombok.NonNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -14,9 +14,11 @@ import reactor.core.publisher.toFlux
 import reactor.core.scheduler.Schedulers.parallel
 import reactor.test.test
 import java.time.Duration
+import java.time.Duration.ZERO
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
+import java.util.logging.Level
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.set
@@ -94,6 +96,31 @@ class ExecutionGraph2Test {
         TimeUnit.MILLISECONDS.sleep(500)
 
         assertThat(executedNodes).startsWith(root, a, c, e, f, b, d)
+    }
+
+    @Test
+    fun `should run with stepExecutors`() {
+
+        val executions = Collections.synchronizedList(ArrayList<String>())
+
+        val s1 = DummyExecutor("s1", executions)
+        val s2 = DummyExecutor("s2", executions)
+
+        s2.waitFor(s1)
+
+        val graph = ExecutionGraph.Builder().addJob(s1).addJob(s2).build()
+        graph.execute()
+
+        assertThat(executions).isEqualTo(listOf("root", "s1", "s2", "end"))
+    }
+
+    class DummyExecutor(private val name2: String, private val executions: MutableList<String>) :
+            StepExecutor(name2, "command $name2", ZERO, JobTrigger("$name2")) {
+
+        override fun runCommand(): ExecutionResult {
+            executions.add(name2)
+            return ExecutionResult(0)
+        }
     }
 
     private fun createExecutionGraph(node: Node, cachedNodes: Map<Node, Mono<Node>>): Flux<Node> {

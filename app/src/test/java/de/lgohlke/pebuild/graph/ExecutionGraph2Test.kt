@@ -113,15 +113,10 @@ class ExecutionGraph2Test {
 
     @Test
     fun `graph execution should timeout`() {
-        val cancelCounter = LongAdder()
         val step = object : DummyExecutor("step") {
             override fun runCommand(): ExecutionResult {
                 TimeUnit.MILLISECONDS.sleep(5000)
-                return super.runCommand()
-            }
-
-            override fun cancel() {
-                cancelCounter.increment()
+                return ExecutionResult(0)
             }
         }
 
@@ -135,10 +130,33 @@ class ExecutionGraph2Test {
         val end = System.currentTimeMillis()
 
         assertThat(end - start).isLessThan(2500)
+    }
+
+    @Test
+    fun `graph execution timeout should cancel the step`() {
+        val cancelCounter = LongAdder()
+        val step = object : DummyExecutor("step") {
+            override fun runCommand(): ExecutionResult {
+                TimeUnit.MILLISECONDS.sleep(5000)
+                return ExecutionResult(0)
+            }
+
+            override fun cancel() {
+                cancelCounter.increment()
+            }
+        }
+
+        ExecutionGraph2.Builder()
+                .addJob(step)
+                .timeout(Duration.ofMillis(1000))
+                .build()
+                .execute()
+
         assertThat(cancelCounter.sum()).isEqualTo(1L)
     }
 
-    open class DummyExecutor(private val name2: String, private val executions: MutableList<String> = ArrayList()) :
+    open class DummyExecutor(private val name2: String,
+                             private val executions: MutableList<String> = ArrayList()) :
             StepExecutor(name2, "command $name2", ZERO, JobTrigger(name2)) {
 
         override fun runCommand(): ExecutionResult {
@@ -147,7 +165,8 @@ class ExecutionGraph2Test {
         }
     }
 
-    private fun createExecutionGraph(node: Node, cachedNodes: Map<Node, Mono<Node>>): Flux<Node> {
+    private fun createExecutionGraph(node: Node,
+                                     cachedNodes: Map<Node, Mono<Node>>): Flux<Node> {
         val thisNode = cachedNodes[node]?.toFlux() ?: throw IllegalStateException("missing node in cached map: $node")
         val preFluxes = node.predecessors.map { predecessor -> createExecutionGraph(predecessor, cachedNodes) }
         val merge = Flux.merge(Flux.fromIterable(preFluxes))
@@ -173,7 +192,8 @@ class ExecutionGraph2Test {
                val predecessors: Set<Node> = setOf(),
                private var terminated: Boolean = false) {
 
-        constructor(name: String, vararg predecessors: Node) : this(name, predecessors.toSet())
+        constructor(name: String,
+                    vararg predecessors: Node) : this(name, predecessors.toSet())
 
         companion object {
             private val log = LoggerFactory.getLogger(this::class.java.enclosingClass)

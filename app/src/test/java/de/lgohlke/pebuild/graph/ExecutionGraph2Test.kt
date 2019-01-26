@@ -113,10 +113,15 @@ class ExecutionGraph2Test {
 
     @Test
     fun `graph execution should timeout`() {
+        val cancelCounter = LongAdder()
         val step = object : DummyExecutor("step") {
             override fun runCommand(): ExecutionResult {
                 TimeUnit.MILLISECONDS.sleep(5000)
                 return super.runCommand()
+            }
+
+            override fun cancel() {
+                cancelCounter.increment()
             }
         }
 
@@ -130,10 +135,11 @@ class ExecutionGraph2Test {
         val end = System.currentTimeMillis()
 
         assertThat(end - start).isLessThan(2500)
+        assertThat(cancelCounter.sum()).isEqualTo(1L)
     }
 
     open class DummyExecutor(private val name2: String, private val executions: MutableList<String> = ArrayList()) :
-            StepExecutor(name2, "command $name2", ZERO, JobTrigger("$name2")) {
+            StepExecutor(name2, "command $name2", ZERO, JobTrigger(name2)) {
 
         override fun runCommand(): ExecutionResult {
             executions.add(name2)
@@ -189,16 +195,19 @@ class ExecutionGraph2Test {
     }
 }
 
-class ExecutionGraph2(private val executors: Collection<StepExecutor>, val theFinalStep: StepExecutor, val timeout: Duration) {
+class ExecutionGraph2(private val steps: Collection<StepExecutor>,
+                      private val finalStep: StepExecutor,
+                      private val timeout: Duration) {
     fun execute() {
-        val cachedNodes = executors.map { executor ->
-            executor to Mono.just(executor).doOnSubscribe {
-                executor.execute()
-            }.cache()
+        val cachedSteps = steps.map { step ->
+            step to Mono.just(step)
+                    .doOnSubscribe { step.execute() }
+                    .cache()
+                    .doOnCancel { step.cancel() }
         }
                 .toMap()
 
-        val graph = createExecutionGraph(theFinalStep, cachedNodes).log(null, Level.WARNING)
+        val graph = createExecutionGraph(finalStep, cachedSteps).log(null, Level.WARNING)
 
         try {
             graph.subscribeOn(parallel())
@@ -208,9 +217,10 @@ class ExecutionGraph2(private val executors: Collection<StepExecutor>, val theFi
         }
     }
 
-    private fun createExecutionGraph(node: StepExecutor, cachedNodes: Map<StepExecutor, Mono<StepExecutor>>): Flux<StepExecutor> {
-        val thisNode = cachedNodes[node]?.toFlux() ?: throw IllegalStateException("missing node in cached map: $node")
-        val preFluxes = node.waitForJobs.map { predecessor -> createExecutionGraph(predecessor, cachedNodes) }
+    private fun createExecutionGraph(step: StepExecutor,
+                                     cachedNodes: Map<StepExecutor, Mono<StepExecutor>>): Flux<StepExecutor> {
+        val thisNode = cachedNodes[step]?.toFlux() ?: throw IllegalStateException("missing step in cached map: $step")
+        val preFluxes = step.waitForJobs.map { predecessor -> createExecutionGraph(predecessor, cachedNodes) }
         val merge = Flux.merge(Flux.fromIterable(preFluxes))
         return Flux.concat(merge, thisNode)
     }

@@ -72,24 +72,29 @@ class ExecutionGraph2Test {
 
     @Test
     fun `should execute in correct order`() {
-        val executedNodes = Collections.synchronizedList(ArrayList<Node>())
+        val executions = Collections.synchronizedList(ArrayList<String>())
 
-        val cachedNodes = nodes.map { n ->
-            n to Mono.just(n).doOnSubscribe {
-                n.execute()
-                executedNodes.add(n)
-            }.cache()
-        }
-                .toMap()
+        val a = DummyExecutor("a", executions)
+        val c = DummyExecutor("c", executions)
+        val e = DummyExecutor("e", executions)
+        val d = DummyExecutor("d", executions)
+        val f = DummyExecutor("f", executions)
+        val b = DummyExecutor("b", executions)
 
-        val graph = createExecutionGraph(end, cachedNodes).log(null, Level.WARNING)
+        c.waitFor(a)
+        e.waitFor(a)
+        e.waitFor(c)
+        d.waitFor(e)
+        f.waitFor(e)
+        b.waitFor(e)
+        b.waitFor(f)
 
-        graph.subscribeOn(parallel())
-                .subscribe { v -> print(" $v ->") }
+        ExecutionGraph2.Builder()
+                .addJobs(a, b, c, d, e, f)
+                .build()
+                .execute()
 
-        TimeUnit.MILLISECONDS.sleep(500)
-
-        assertThat(executedNodes).startsWith(root, a, c, e, f, b, d)
+        assertThat(executions).containsExactly("a", "c", "e", "f", "b", "d")
     }
 
     @Test
@@ -230,8 +235,12 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
         val graph = createExecutionGraph(finalStep, cachedSteps).log(null, Level.WARNING)
 
         try {
-            graph.subscribeOn(parallel())
-                    .blockLast(timeout)
+            val subscribedGraph = graph.subscribeOn(parallel())
+            if (timeout.isZero) {
+                subscribedGraph.blockLast()
+            } else {
+                subscribedGraph.blockLast(timeout)
+            }
         } catch (e: java.lang.IllegalStateException) {
             System.err.println("execution timeout: " + e.message)
         }
@@ -281,6 +290,11 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
 
         fun timeout(timeout: Duration): Builder {
             this.timeout = timeout
+            return this
+        }
+
+        fun addJobs(vararg jobs: StepExecutor): Builder {
+            jobs.forEach { addJob(it) }
             return this
         }
 

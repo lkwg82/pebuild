@@ -247,7 +247,7 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
             return this
         }
 
-        internal fun validate() {
+        private fun validate() {
             ReferencedJobMissingValidator.validate(steps)
             CycleValidator.validate(steps)
         }

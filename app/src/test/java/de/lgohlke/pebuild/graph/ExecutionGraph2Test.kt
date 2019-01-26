@@ -6,6 +6,7 @@ import de.lgohlke.pebuild.StepExecutor
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 import java.util.logging.Level
 import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.set
 
@@ -96,6 +98,30 @@ class ExecutionGraph2Test {
         assertThat(cancelCounter.sum()).isEqualTo(1L)
     }
 
+    //@Test
+    // TODO
+    fun printGraph() {
+        val a = DummyExecutor("A")
+        val b = DummyExecutor("B")
+        b.waitFor(a)
+
+        val graph = ExecutionGraph2.Builder()
+                .addJobs(a, b)
+                .build()
+
+        assertThat(graph.toString()).isEqualTo("(A [])->(B [A])")
+    }
+
+    @Test
+    fun `should fail adding the same step twice`() {
+        val a = DummyExecutor("A")
+
+        val builder = ExecutionGraph2.Builder()
+                .addJob(a)
+
+        assertThrows<ExecutionGraph2.Builder.DuplicateJobException> { builder.addJob(a) }
+    }
+
     open class DummyExecutor(private val name2: String,
                              private val executions: MutableList<String> = ArrayList()) :
             StepExecutor(name2, "command $name2", ZERO, JobTrigger(name2)) {
@@ -143,11 +169,13 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
 
     class Builder {
 
-        private val executors = ArrayList<StepExecutor>()
+        private val executors = HashSet<StepExecutor>()
         private var timeout = ZERO
 
         fun addJob(executor: StepExecutor): Builder {
-            executors.add(executor)
+            if (!executors.add(executor)) {
+                throw DuplicateJobException("$executor is already added")
+            }
             return this
         }
 
@@ -190,5 +218,7 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
             executors.add(finalStep)
             return ExecutionGraph2(executors, finalStep, timeout)
         }
+
+        class DuplicateJobException(message: String) : RuntimeException(message)
     }
 }

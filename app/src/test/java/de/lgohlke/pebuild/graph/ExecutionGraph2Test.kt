@@ -3,6 +3,11 @@ package de.lgohlke.pebuild.graph
 import de.lgohlke.pebuild.ExecutionResult
 import de.lgohlke.pebuild.JobTrigger
 import de.lgohlke.pebuild.StepExecutor
+import de.lgohlke.pebuild.graph.ExecutionGraph2.Builder.DuplicateJobException
+import de.lgohlke.pebuild.graph.validators.CycleValidator
+import de.lgohlke.pebuild.graph.validators.CycleValidator.CycleDetected
+import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator
+import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator.ReferencedJobsMissing
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
@@ -119,7 +124,36 @@ class ExecutionGraph2Test {
         val builder = ExecutionGraph2.Builder()
                 .addJob(a)
 
-        assertThrows<ExecutionGraph2.Builder.DuplicateJobException> { builder.addJob(a) }
+        assertThrows<DuplicateJobException> { builder.addJob(a) }
+    }
+
+    @Test
+    fun `should fail building a cycling graph`() {
+        val a = DummyExecutor("A")
+        val b = DummyExecutor("B")
+
+        a.waitFor(b)
+        b.waitFor(a)
+
+        val builder = ExecutionGraph2.Builder()
+                .addJob(a)
+                .addJob(b)
+
+        assertThrows<CycleDetected> { builder.build() }
+    }
+
+    @Test
+    fun `should fail building an incomplete graph`() {
+        val a = DummyExecutor("A")
+        val b = DummyExecutor("B")
+
+        a.waitFor(b)
+        b.waitFor(a)
+
+        val builder = ExecutionGraph2.Builder()
+                .addJob(a)
+
+        assertThrows<ReferencedJobsMissing> { builder.build() }
     }
 
     open class DummyExecutor(private val name2: String,
@@ -169,11 +203,11 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
 
     class Builder {
 
-        private val executors = HashSet<StepExecutor>()
+        private val steps = HashSet<StepExecutor>()
         private var timeout = ZERO
 
         fun addJob(executor: StepExecutor): Builder {
-            if (!executors.add(executor)) {
+            if (!steps.add(executor)) {
                 throw DuplicateJobException("$executor is already added")
             }
             return this
@@ -213,10 +247,16 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
             return this
         }
 
+        internal fun validate() {
+            ReferencedJobMissingValidator.validate(steps)
+            CycleValidator.validate(steps)
+        }
+
         fun build(): ExecutionGraph2 {
-            val finalStep = createFinalStep(executors)
-            executors.add(finalStep)
-            return ExecutionGraph2(executors, finalStep, timeout)
+            validate()
+            val finalStep = createFinalStep(steps)
+            steps.add(finalStep)
+            return ExecutionGraph2(steps, finalStep, timeout)
         }
 
         class DuplicateJobException(message: String) : RuntimeException(message)

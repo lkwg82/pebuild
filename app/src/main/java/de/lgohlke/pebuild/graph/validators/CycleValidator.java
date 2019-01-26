@@ -28,7 +28,7 @@ public class CycleValidator {
         }
     }
 
-    static class CycleDetected extends RuntimeException {
+    public static class CycleDetected extends RuntimeException {
         CycleDetected(String message) {
             super(message);
         }

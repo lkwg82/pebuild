@@ -48,13 +48,6 @@ class ExecutionGraph2Test {
     }
 
     @Test
-    fun `should create successor map`() {
-        val successorMap = createSuccessorMap().toString()
-
-        assertThat(successorMap).isEqualTo("{root*=[A], A=[C, E], B=[end], C=[E], D=[end], E=[B, D, F], F=[B], end=[]}")
-    }
-
-    @Test
     fun cachedMono() {
         val counter = LongAdder()
         val mono = object : Mono<String>() {
@@ -118,7 +111,28 @@ class ExecutionGraph2Test {
         assertThat(executions).containsExactly("s1", "s2")
     }
 
-    class DummyExecutor(private val name2: String, private val executions: MutableList<String>) :
+    @Test
+    fun `graph execution should timeout`() {
+        val step = object : DummyExecutor("step") {
+            override fun runCommand(): ExecutionResult {
+                TimeUnit.MILLISECONDS.sleep(5000)
+                return super.runCommand()
+            }
+        }
+
+        val graph = ExecutionGraph2.Builder()
+                .addJob(step)
+                .timeout(Duration.ofMillis(1000))
+                .build()
+
+        val start = System.currentTimeMillis()
+        graph.execute()
+        val end = System.currentTimeMillis()
+
+        assertThat(end - start).isLessThan(2500)
+    }
+
+    open class DummyExecutor(private val name2: String, private val executions: MutableList<String> = ArrayList()) :
             StepExecutor(name2, "command $name2", ZERO, JobTrigger("$name2")) {
 
         override fun runCommand(): ExecutionResult {
@@ -175,7 +189,7 @@ class ExecutionGraph2Test {
     }
 }
 
-class ExecutionGraph2(private val executors: Collection<StepExecutor>, val theFinalStep: StepExecutor) {
+class ExecutionGraph2(private val executors: Collection<StepExecutor>, val theFinalStep: StepExecutor, val timeout: Duration) {
     fun execute() {
         val cachedNodes = executors.map { executor ->
             executor to Mono.just(executor).doOnSubscribe {
@@ -186,8 +200,12 @@ class ExecutionGraph2(private val executors: Collection<StepExecutor>, val theFi
 
         val graph = createExecutionGraph(theFinalStep, cachedNodes).log(null, Level.WARNING)
 
-        graph.subscribeOn(parallel())
-                .blockLast()
+        try {
+            graph.subscribeOn(parallel())
+                    .blockLast(timeout)
+        } catch (e: java.lang.IllegalStateException) {
+            System.err.println("execution timeout: " + e.message)
+        }
     }
 
     private fun createExecutionGraph(node: StepExecutor, cachedNodes: Map<StepExecutor, Mono<StepExecutor>>): Flux<StepExecutor> {
@@ -198,7 +216,10 @@ class ExecutionGraph2(private val executors: Collection<StepExecutor>, val theFi
     }
 
     class Builder {
+
         private val executors = ArrayList<StepExecutor>()
+        private var timeout = ZERO
+
         fun addJob(executor: StepExecutor): Builder {
             executors.add(executor)
             return this
@@ -228,10 +249,15 @@ class ExecutionGraph2(private val executors: Collection<StepExecutor>, val theFi
             return successorMap
         }
 
+        fun timeout(timeout: Duration): Builder {
+            this.timeout = timeout
+            return this
+        }
+
         fun build(): ExecutionGraph2 {
-            val theFinalStep = createFinalStep(executors)
-            executors.add(theFinalStep)
-            return ExecutionGraph2(executors, theFinalStep)
+            val finalStep = createFinalStep(executors)
+            executors.add(finalStep)
+            return ExecutionGraph2(executors, finalStep, timeout)
         }
     }
 }

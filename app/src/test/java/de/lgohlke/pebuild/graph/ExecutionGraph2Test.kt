@@ -51,7 +51,7 @@ class ExecutionGraph2Test {
     fun `should create successor map`() {
         val successorMap = createSuccessorMap().toString()
 
-        assertThat(successorMap).isEqualTo("{root*=[A], A=[C, E], B=[], C=[E], D=[], E=[B, D, F], F=[B]}")
+        assertThat(successorMap).isEqualTo("{root*=[A], A=[C, E], B=[end], C=[E], D=[end], E=[B, D, F], F=[B], end=[]}")
     }
 
     @Test
@@ -110,7 +110,11 @@ class ExecutionGraph2Test {
 
         ExecutionGraph2.Builder().addJob(s1).addJob(s2).build().execute()
 
-        assertThat(executions).isEqualTo(listOf("s1", "s2"))
+        TimeUnit.MILLISECONDS.sleep(500)
+
+        //  TODO execution is not blocking
+
+        assertThat(executions).containsExactly("s1", "s2")
     }
 
     class DummyExecutor(private val name2: String, private val executions: MutableList<String>) :

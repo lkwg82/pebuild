@@ -121,7 +121,7 @@ public class ReactorTest {
                     .verifyThenAssertThat(Duration.ofSeconds(1));
     }
 
-    @Test
+    // @Test
     void triggerSubsequentJobOnComplete() {
         val a = Flux.just("a").delayElements(ofMillis(2000)).timeout(ofMillis(500));
         val b = Flux.just("b").delayElements(ofMillis(3000));

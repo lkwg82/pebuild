@@ -82,12 +82,10 @@ class ExecutionGraph2Test {
         val b = DummyExecutor("b", executions)
 
         c.waitFor(a)
-        e.waitFor(a)
-        e.waitFor(c)
+        e.waitFor(a, c)
         d.waitFor(e)
         f.waitFor(e)
-        b.waitFor(e)
-        b.waitFor(f)
+        b.waitFor(e, f)
 
         ExecutionGraph2.Builder()
                 .addJobs(a, b, c, d, e, f)

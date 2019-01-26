@@ -48,9 +48,11 @@ public abstract class StepExecutor {
         return null;
     }
 
-    public void waitFor(@NonNull StepExecutor executor) {
-        if (!waitForJobs.add(executor)) {
-            throw new IllegalArgumentException("tried to add this executor again: " + executor);
+    public void waitFor(@NonNull StepExecutor... executors) {
+        for (StepExecutor executor : executors) {
+            if (!waitForJobs.add(executor)) {
+                throw new IllegalArgumentException("tried to add this executor again: " + executor);
+            }
         }
     }
 

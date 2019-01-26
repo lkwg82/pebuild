@@ -86,7 +86,8 @@ class ExecutionGraph2Test {
                 n.execute()
                 executedNodes.add(n)
             }.cache()
-        }.toMap()
+        }
+                .toMap()
 
         val graph = createExecutionGraph(end, cachedNodes).log(null, Level.WARNING)
 
@@ -108,11 +109,11 @@ class ExecutionGraph2Test {
 
         s2.waitFor(s1)
 
-        ExecutionGraph2.Builder().addJob(s1).addJob(s2).build().execute()
-
-        TimeUnit.MILLISECONDS.sleep(500)
-
-        //  TODO execution is not blocking
+        ExecutionGraph2.Builder()
+                .addJob(s1)
+                .addJob(s2)
+                .build()
+                .execute()
 
         assertThat(executions).containsExactly("s1", "s2")
     }
@@ -180,12 +181,13 @@ class ExecutionGraph2(private val executors: Collection<StepExecutor>, val theFi
             executor to Mono.just(executor).doOnSubscribe {
                 executor.execute()
             }.cache()
-        }.toMap()
+        }
+                .toMap()
 
         val graph = createExecutionGraph(theFinalStep, cachedNodes).log(null, Level.WARNING)
 
         graph.subscribeOn(parallel())
-                .subscribe { v -> print(" $v ->") }
+                .blockLast()
     }
 
     private fun createExecutionGraph(node: StepExecutor, cachedNodes: Map<StepExecutor, Mono<StepExecutor>>): Flux<StepExecutor> {

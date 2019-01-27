@@ -2,7 +2,6 @@ package de.lgohlke.pebuild;
 
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -11,7 +10,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
 @Getter
 @Slf4j
 public abstract class StepExecutor {
@@ -22,6 +20,17 @@ public abstract class StepExecutor {
 
     private final Set<StepExecutor> waitForJobs = new HashSet<>();
     private TimingContext timingContext = new TimingContext("unset", 0, 0);
+
+    @java.beans.ConstructorProperties({"name", "command", "timeout", "jobTrigger"})
+    public StepExecutor(@NonNull String name,
+                        @NonNull String command,
+                        @NonNull Duration timeout,
+                        @NonNull JobTrigger jobTrigger) {
+        this.name = name;
+        this.command = command;
+        this.timeout = timeout;
+        this.jobTrigger = jobTrigger;
+    }
 
     public final void execute() {
 

@@ -1,6 +1,5 @@
 package de.lgohlke.pebuild;
 
-import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -8,9 +7,9 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-@Getter
 @Slf4j
 public abstract class StepExecutor {
     private final @NonNull String name;
@@ -19,6 +18,7 @@ public abstract class StepExecutor {
 
     private final Set<StepExecutor> waitForJobs = new HashSet<>();
     private TimingContext timingContext = new TimingContext("unset", 0, 0);
+    private AtomicBoolean canceled = new AtomicBoolean(false);
 
     public StepExecutor(@NonNull String name,
                         @NonNull String command,
@@ -26,6 +26,10 @@ public abstract class StepExecutor {
         this.name = name;
         this.command = command;
         this.timeout = timeout;
+    }
+
+    public StepExecutor(@NonNull String name, @NonNull String command) {
+        this(name, command, Duration.ofDays(999));
     }
 
     public final void execute() {
@@ -78,5 +82,32 @@ public abstract class StepExecutor {
     public void cancel() {
         // TODO
         log.warn("cancel");
+        canceled.set(true);
+    }
+
+    @NonNull
+    public String getName() {
+        return name;
+    }
+
+    @NonNull
+    public String getCommand() {
+        return command;
+    }
+
+    @NonNull
+    public Duration getTimeout() {
+        return timeout;
+    }
+
+    public TimingContext getTimingContext() {
+        return timingContext;
+    }
+
+    public boolean isCanceled() {
+
+        System.out.println("isCanceled? " + this);
+
+        return canceled.get();
     }
 }

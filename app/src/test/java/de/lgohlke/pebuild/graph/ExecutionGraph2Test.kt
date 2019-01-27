@@ -10,7 +10,7 @@ import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.Duration
-import java.time.Duration.ZERO
+import java.time.Duration.ofMillis
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
@@ -92,6 +92,33 @@ class ExecutionGraph2Test {
         assertThat(cancelCounter.sum()).isEqualTo(1L)
     }
 
+    // TODO
+    // @Test
+    fun `graph execution timeout of step should cancel the graph`() {
+        val executions = ArrayList<String>(2)
+        val stepWithTimeout = object : StepExecutor("step", "command", ofMillis(1000)) {
+            override fun runCommand(): ExecutionResult {
+                executions.add(name)
+                TimeUnit.MILLISECONDS.sleep(5000)
+                return ExecutionResult(0)
+            }
+        }
+        val stepAfter = object : DummyExecutor("2nd step") {
+            override fun runCommand(): ExecutionResult {
+                executions.add(name)
+                return super.runCommand()
+            }
+        }
+        stepAfter.waitFor(stepWithTimeout)
+
+        val graph = ExecutionGraph2.Builder()
+                .addJobs(stepWithTimeout, stepAfter)
+                .build()
+        graph.execute()
+
+        assertThat(executions).containsExactly("step")
+    }
+
     //@Test
     // TODO
     fun printGraph() {
@@ -147,7 +174,7 @@ class ExecutionGraph2Test {
 
     open class DummyExecutor(private val name2: String,
                              private val executions: MutableList<String> = ArrayList()) :
-            StepExecutor(name2, "command $name2", ZERO) {
+            StepExecutor(name2, "command $name2") {
 
         override fun runCommand(): ExecutionResult {
             executions.add(name2)

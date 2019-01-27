@@ -4,7 +4,6 @@ import de.lgohlke.pebuild.StepExecutor;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,7 +29,7 @@ class TopologicalSorterTest {
     }
 
     private StepExecutor create(String name) {
-        return new StepExecutor(name, name, Duration.ZERO) {
+        return new StepExecutor(name, name) {
         };
     }
 }

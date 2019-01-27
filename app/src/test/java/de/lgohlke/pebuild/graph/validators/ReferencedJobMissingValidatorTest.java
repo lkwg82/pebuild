@@ -4,16 +4,15 @@ import de.lgohlke.pebuild.StepExecutor;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ReferencedJobMissingValidatorTest {
 
-    private StepExecutor a = new StepExecutor("a", "A", Duration.ZERO) {
+    private StepExecutor a = new StepExecutor("a", "A") {
     };
-    private StepExecutor b = new StepExecutor("b", "B", Duration.ZERO) {
+    private StepExecutor b = new StepExecutor("b", "B") {
     };
 
     @Test

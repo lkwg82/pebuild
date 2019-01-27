@@ -21,24 +21,38 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
                       private val timeout: Duration) {
     fun execute() {
         val cachedSteps = steps.map { step ->
-            step to Mono.fromRunnable<StepExecutor>(step::execute)
-                    .cache()
-                    .doOnCancel { step.cancel() }
+            step to createCachedMono(step)
         }
                 .toMap()
 
         val graph = createExecutionGraph(finalStep, cachedSteps).log(null, Level.WARNING)
 
         try {
-            val subscribedGraph = graph.subscribeOn(Schedulers.parallel())
-            if (timeout.isZero) {
-                subscribedGraph.blockLast()
-            } else {
-                subscribedGraph.blockLast(timeout)
-            }
+            graph.subscribeOn(Schedulers.parallel())
+                    .takeUntil { s -> s.isCanceled }
+                    .blockLast(timeout)
         } catch (e: java.lang.IllegalStateException) {
             System.err.println("execution timeout: " + e.message)
         }
+    }
+
+    private fun createCachedMono(step: StepExecutor): Mono<StepExecutor> {
+        return Mono.fromRunnable<StepExecutor>(step::execute)
+                .timeout(step.timeout)
+                .doOnError { error ->
+                    run {
+                        println("error: $error on step $step")
+                        step.cancel()
+                    }
+                }
+                .cache()
+                .doOnCancel {
+                    run {
+                        step.cancel()
+                        System.err.println("cancel $step")
+                    }
+                }
+                .onErrorResume { Mono.empty() }
     }
 
     private fun createExecutionGraph(step: StepExecutor,
@@ -52,7 +66,7 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
     class Builder {
 
         private val steps = HashSet<StepExecutor>()
-        private var timeout = Duration.ZERO
+        private var timeout = Duration.ofDays(999)
 
         fun addJob(executor: StepExecutor): Builder {
             if (!steps.add(executor)) {
@@ -65,7 +79,7 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
             val finalSteps = createSuccessorMap(executors)
                     .filter { (_, successors) -> successors.isEmpty() }
                     .map { (node, _) -> node }
-            val theFinalStep = object : StepExecutor("end", "", Duration.ZERO) {}
+            val theFinalStep = object : StepExecutor("end", "") {}
             finalSteps.forEach { step -> theFinalStep.waitFor(step) }
             return theFinalStep
         }

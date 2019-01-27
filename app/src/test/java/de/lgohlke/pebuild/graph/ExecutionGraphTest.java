@@ -96,7 +96,7 @@ class ExecutionGraphTest {
     }
 
     private static StepExecutor createStepExecutor(String name, int delay) {
-        return new StepExecutor(name, "cmd " + name, Duration.ZERO) {
+        return new StepExecutor(name, "cmd " + name) {
             @Override
             public ExecutionResult runCommand() throws Exception {
                 TimeUnit.MILLISECONDS.sleep(delay);

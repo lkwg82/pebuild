@@ -3,14 +3,13 @@ package de.lgohlke.pebuild;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.concurrent.atomic.LongAdder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class StepExecutorTest {
-    private StepExecutor executor = new StepExecutor("name", "", Duration.ZERO) {
+    private StepExecutor executor = new StepExecutor("name", "") {
     };
 
     @Test
@@ -56,7 +55,7 @@ class StepExecutorTest {
                 }
             };*/
 
-            StepExecutor executor = new StepExecutor("name", "", Duration.ZERO) {
+            StepExecutor executor = new StepExecutor("name", "") {
             };
 
             executor.execute();
@@ -67,9 +66,9 @@ class StepExecutorTest {
 
     @Test
     void failOnDuplicateWaitForStep() {
-        StepExecutor a = new StepExecutor("A", "", Duration.ZERO) {
+        StepExecutor a = new StepExecutor("A", "") {
         };
-        StepExecutor b = new StepExecutor("B", "", Duration.ZERO) {
+        StepExecutor b = new StepExecutor("B", "") {
         };
 
         a.waitFor(b);

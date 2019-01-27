@@ -1,11 +1,11 @@
 package de.lgohlke.pebuild.graph.validators;
 
 import de.lgohlke.pebuild.StepExecutor;
+import lombok.val;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -20,7 +20,7 @@ class CycleValidatorTest {
         b.waitFor(a);
         a.waitFor(b);
 
-        List<StepExecutor> jobs = Lists.newArrayList(a, b);
+        val jobs = Lists.newArrayList(a, b);
 
         assertThrows(CycleValidator.CycleDetected.class, () -> CycleValidator.validate(jobs));
     }
@@ -29,7 +29,7 @@ class CycleValidatorTest {
     void detectSelfCycles() {
         b.waitFor(b);
 
-        List<StepExecutor> jobs = Lists.newArrayList(b);
+        val jobs = Lists.newArrayList(b);
 
         assertThrows(CycleValidator.CycleDetected.class, () -> CycleValidator.validate(jobs));
     }
@@ -38,7 +38,7 @@ class CycleValidatorTest {
     void detectNoCycles() {
         b.waitFor(a);
 
-        List<StepExecutor> jobs = Lists.newArrayList(a, b);
+        val jobs = Lists.newArrayList(a, b);
 
         CycleValidator.validate(jobs);
     }

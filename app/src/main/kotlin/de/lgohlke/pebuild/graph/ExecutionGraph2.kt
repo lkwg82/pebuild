@@ -21,8 +21,7 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
                       private val timeout: Duration) {
     fun execute() {
         val cachedSteps = steps.map { step ->
-            step to Mono.just(step)
-                    .doOnSubscribe { step.execute() }
+            step to Mono.fromRunnable<StepExecutor>(step::execute)
                     .cache()
                     .doOnCancel { step.cancel() }
         }

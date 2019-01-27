@@ -18,7 +18,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 
 import static java.time.Duration.ofMillis;
 import static reactor.core.scheduler.Schedulers.elastic;
@@ -119,25 +118,6 @@ public class ReactorTest {
                     .expectNext("a", "b", "c")
                     .expectComplete()
                     .verifyThenAssertThat(Duration.ofSeconds(1));
-    }
-
-    // @Test
-    void triggerSubsequentJobOnComplete() {
-        val a = Flux.just("a").delayElements(ofMillis(2000)).timeout(ofMillis(500));
-        val b = Flux.just("b").delayElements(ofMillis(3000));
-        val c = Flux.just("c").delayElements(ofMillis(50)).timeout(ofMillis(100));
-
-
-        val flux = Flux.merge(a, b)
-                       .log(null, Level.WARNING)
-                       .parallel(2)
-                       .doOnComplete(c::subscribe);
-
-        StepVerifier.create(flux)
-                    .expectNext("a", "b")
-                    .expectComplete()
-                    .verifyThenAssertThat(Duration.ofSeconds(6));
-        StepVerifier.create(c).expectNext("c").expectComplete().verifyThenAssertThat(ofMillis(500));
     }
 
     @Test

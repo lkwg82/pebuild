@@ -1,6 +1,5 @@
 package de.lgohlke.pebuild.graph;
 
-import de.lgohlke.pebuild.JobTrigger;
 import de.lgohlke.pebuild.StepExecutor;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
@@ -31,7 +30,7 @@ class TopologicalSorterTest {
     }
 
     private StepExecutor create(String name) {
-        return new StepExecutor(name, name, Duration.ZERO, new JobTrigger(name)) {
+        return new StepExecutor(name, name, Duration.ZERO) {
         };
     }
 }

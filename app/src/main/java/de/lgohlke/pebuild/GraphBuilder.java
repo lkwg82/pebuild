@@ -59,7 +59,7 @@ public class GraphBuilder {
         stepMap.keySet()
                .forEach(name -> {
                    val step = stepMap.get(name);
-                   val converter = new StepExecutorConverter(step, new JobTrigger(name));
+                   val converter = new StepExecutorConverter(step);
                    val executor = converter.asShellExecutor();
 
                    jobMap.put(name, executor);

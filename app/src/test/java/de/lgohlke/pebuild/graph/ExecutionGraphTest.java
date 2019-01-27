@@ -2,7 +2,6 @@ package de.lgohlke.pebuild.graph;
 
 import de.lgohlke.pebuild.Configuration;
 import de.lgohlke.pebuild.ExecutionResult;
-import de.lgohlke.pebuild.JobTrigger;
 import de.lgohlke.pebuild.StepExecutor;
 import de.lgohlke.pebuild.TimingContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -97,7 +96,7 @@ class ExecutionGraphTest {
     }
 
     private static StepExecutor createStepExecutor(String name, int delay) {
-        return new StepExecutor(name, "cmd " + name, Duration.ZERO, new JobTrigger(name)) {
+        return new StepExecutor(name, "cmd " + name, Duration.ZERO) {
             @Override
             public ExecutionResult runCommand() throws Exception {
                 TimeUnit.MILLISECONDS.sleep(delay);

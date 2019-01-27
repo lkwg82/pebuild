@@ -1,6 +1,5 @@
 package de.lgohlke.pebuild.graph
 
-import de.lgohlke.pebuild.JobTrigger
 import de.lgohlke.pebuild.StepExecutor
 import de.lgohlke.pebuild.graph.validators.CycleValidator
 import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator
@@ -11,19 +10,11 @@ import reactor.core.scheduler.Schedulers
 import java.time.Duration
 import java.util.LinkedHashSet
 import java.util.logging.Level
-import kotlin.collections.Collection
 import kotlin.collections.HashSet
 import kotlin.collections.LinkedHashMap
-import kotlin.collections.Map
-import kotlin.collections.MutableSet
-import kotlin.collections.Set
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.filter
-import kotlin.collections.forEach
-import kotlin.collections.map
 import kotlin.collections.set
-import kotlin.collections.toMap
 
 class ExecutionGraph2(private val steps: Collection<StepExecutor>,
                       private val finalStep: StepExecutor,
@@ -75,9 +66,7 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
             val finalSteps = createSuccessorMap(executors)
                     .filter { (_, successors) -> successors.isEmpty() }
                     .map { (node, _) -> node }
-            val theFinalStep = object : StepExecutor("end", "",
-                                                     Duration.ZERO,
-                                                     JobTrigger("end")) {}
+            val theFinalStep = object : StepExecutor("end", "", Duration.ZERO) {}
             finalSteps.forEach { step -> theFinalStep.waitFor(step) }
             return theFinalStep
         }

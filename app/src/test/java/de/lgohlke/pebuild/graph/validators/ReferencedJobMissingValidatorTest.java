@@ -1,6 +1,5 @@
 package de.lgohlke.pebuild.graph.validators;
 
-import de.lgohlke.pebuild.JobTrigger;
 import de.lgohlke.pebuild.StepExecutor;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
@@ -12,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ReferencedJobMissingValidatorTest {
 
-    private StepExecutor a = new StepExecutor("a", "A", Duration.ZERO, new JobTrigger("a")) {
+    private StepExecutor a = new StepExecutor("a", "A", Duration.ZERO) {
     };
-    private StepExecutor b = new StepExecutor("b", "B", Duration.ZERO, new JobTrigger("b")) {
+    private StepExecutor b = new StepExecutor("b", "B", Duration.ZERO) {
     };
 
     @Test

@@ -1,7 +1,6 @@
 package de.lgohlke.pebuild.graph
 
 import de.lgohlke.pebuild.ExecutionResult
-import de.lgohlke.pebuild.JobTrigger
 import de.lgohlke.pebuild.StepExecutor
 import de.lgohlke.pebuild.graph.ExecutionGraph2.Builder.DuplicateJobException
 import de.lgohlke.pebuild.graph.validators.CycleValidator.CycleDetected
@@ -148,7 +147,7 @@ class ExecutionGraph2Test {
 
     open class DummyExecutor(private val name2: String,
                              private val executions: MutableList<String> = ArrayList()) :
-            StepExecutor(name2, "command $name2", ZERO, JobTrigger(name2)) {
+            StepExecutor(name2, "command $name2", ZERO) {
 
         override fun runCommand(): ExecutionResult {
             executions.add(name2)

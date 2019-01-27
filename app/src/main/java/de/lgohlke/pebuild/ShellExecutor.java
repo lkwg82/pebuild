@@ -25,12 +25,12 @@ class ShellExecutor extends StepExecutor {
     private final boolean syncAfter;
     private Process process;
 
-    ShellExecutor(String name, String command, Duration timeout, JobTrigger jobTrigger) {
-        this(name, command, timeout, jobTrigger, false);
+    ShellExecutor(String name, String command, Duration timeout) {
+        this(name, command, timeout, false);
     }
 
-    ShellExecutor(String name, String command, Duration timeout, JobTrigger jobTrigger, boolean syncAfter) {
-        super(name, command, timeout, jobTrigger);
+    ShellExecutor(String name, String command, Duration timeout, boolean syncAfter) {
+        super(name, command, timeout);
         this.syncAfter = syncAfter;
     }
 
@@ -75,7 +75,7 @@ class ShellExecutor extends StepExecutor {
                 if (syncAfter) {
                     fout.flush();
                     fout.getFD()
-                            .sync();
+                        .sync();
                 }
             }
         }
@@ -120,13 +120,13 @@ class ShellExecutor extends StepExecutor {
         String filename = "step." + getName() + ".output";
 
         if (Configuration.REPORT_DIRECTORY.value()
-                .isEmpty()) {
+                                          .isEmpty()) {
             Configuration.REPORT_DIRECTORY.setIfMissing(System.getProperty("user.dir"));
         }
 
         val outputFile = Paths.get(Configuration.REPORT_DIRECTORY.value(), filename);
         val directory = outputFile.getParent()
-                .toFile();
+                                  .toFile();
         if (!directory.exists()) {
             directory.mkdirs();
         }
@@ -171,9 +171,9 @@ class ShellExecutor extends StepExecutor {
             String[] wrappedInShell = new String[]{"sh"};
             log.debug("raw command is '{}'", String.join(" ", wrappedInShell));
             log.warn("" +
-                    "dont have a reaper context, so the build " +
-                    "can leave zombie processes behind " +
-                    "(not yet implemented, see tini for linux)");
+                             "dont have a reaper context, so the build " +
+                             "can leave zombie processes behind " +
+                             "(not yet implemented, see tini for linux)");
             return new ProcessBuilder(wrappedInShell);
         }
 

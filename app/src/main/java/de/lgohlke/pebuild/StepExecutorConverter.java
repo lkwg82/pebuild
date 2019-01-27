@@ -6,9 +6,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class StepExecutorConverter {
     private final Step step;
-    private final JobTrigger jobTrigger;
 
     ShellExecutor asShellExecutor() {
-        return new ShellExecutor(step.getName(), step.getCommand(), step.getTimeoutAsDuration(), jobTrigger);
+        return new ShellExecutor(step.getName(), step.getCommand(), step.getTimeoutAsDuration());
     }
 }

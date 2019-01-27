@@ -16,20 +16,28 @@ public abstract class StepExecutor {
     private final @NonNull String name;
     private final @NonNull String command;
     private final @NonNull Duration timeout;
+    @Deprecated
     private final @NonNull JobTrigger jobTrigger;
 
     private final Set<StepExecutor> waitForJobs = new HashSet<>();
     private TimingContext timingContext = new TimingContext("unset", 0, 0);
 
     @java.beans.ConstructorProperties({"name", "command", "timeout", "jobTrigger"})
-    public StepExecutor(@NonNull String name,
-                        @NonNull String command,
-                        @NonNull Duration timeout,
-                        @NonNull JobTrigger jobTrigger) {
+    private StepExecutor(@NonNull String name,
+                         @NonNull String command,
+                         @NonNull Duration timeout,
+                         @Deprecated
+                         @NonNull JobTrigger jobTrigger) {
         this.name = name;
         this.command = command;
         this.timeout = timeout;
         this.jobTrigger = jobTrigger;
+    }
+
+    public StepExecutor(@NonNull String name,
+                        @NonNull String command,
+                        @NonNull Duration timeout) {
+        this(name, command, timeout, new JobTrigger(name));
     }
 
     public final void execute() {

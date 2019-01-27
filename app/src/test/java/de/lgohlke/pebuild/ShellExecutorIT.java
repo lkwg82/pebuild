@@ -25,7 +25,7 @@ import static reactor.core.scheduler.Schedulers.elastic;
 
 class ShellExecutorIT {
 
-    public static final Duration WAIT_MAX_500_MS = Duration.ofMillis(500);
+    private static final Duration WAIT_MAX_500_MS = Duration.ofMillis(500);
 
     static {
         System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.Channel", "DEBUG");
@@ -49,12 +49,10 @@ class ShellExecutorIT {
         FileUtils.deleteDirectory(tempDirectory.toFile());
     }
 
-    private JobTrigger trigger = new JobTrigger("test");
-
     @Test
     void captureOutputAsFile() throws Exception {
         val command = "echo hello err >&2; echo hello out";
-        val shellExecutor = new ShellExecutor("test", command, ZERO, trigger, true);
+        val shellExecutor = new ShellExecutor("test", command, ZERO, true);
 
         shellExecutor.runCommand();
 
@@ -68,7 +66,7 @@ class ShellExecutorIT {
         Configuration.REPORT_DIRECTORY.overwrite(tempDirectory.toAbsolutePath()
                                                               .toString() + "/x/s");
 
-        val shellExecutor = new ShellExecutor("test", "env", ZERO, trigger);
+        val shellExecutor = new ShellExecutor("test", "env", ZERO);
 
         shellExecutor.runCommand();
     }
@@ -77,8 +75,8 @@ class ShellExecutorIT {
     class exitCodes {
 
         @Test
-        void shouldPropagateExitCodeOnFailedCommand() throws Exception {
-            val shellExecutor = new ShellExecutor("test", "exit 23", ZERO, trigger);
+        void shouldPropagateExitCodeOnFailedCommand() {
+            val shellExecutor = new ShellExecutor("test", "exit 23", ZERO);
 
             StepVerifier.create(shellExecutor.getResults())
                         .then(() -> execute(shellExecutor))
@@ -88,8 +86,8 @@ class ShellExecutorIT {
         }
 
         @Test
-        void shouldPropagateExitCodeOnWrongCommand() throws Exception {
-            val shellExecutor = new ShellExecutor("test", "kjakdhaksdhk", ZERO, trigger);
+        void shouldPropagateExitCodeOnWrongCommand() {
+            val shellExecutor = new ShellExecutor("test", "kjakdhaksdhk", ZERO);
 
             StepVerifier.create(shellExecutor.getResults())
                         .then(() -> execute(shellExecutor))
@@ -102,8 +100,8 @@ class ShellExecutorIT {
     @Nested
     class timeout {
         @Test
-        void exitsBeforeTimeout() throws Exception {
-            val shellExecutor = new ShellExecutor("test", "exit 3", Duration.ofSeconds(1), trigger);
+        void exitsBeforeTimeout() {
+            val shellExecutor = new ShellExecutor("test", "exit 3", Duration.ofSeconds(1));
 
             StepVerifier.create(shellExecutor.getResults())
                         .then(() -> execute(shellExecutor))
@@ -113,8 +111,8 @@ class ShellExecutorIT {
         }
 
         @Test
-        void exitsWithTimeoutButProcessIsKindOfBlocking() throws Exception {
-            val shellExecutor = new ShellExecutor("test", "sleep 777", Duration.ofMillis(100), trigger);
+        void exitsWithTimeoutButProcessIsKindOfBlocking() {
+            val shellExecutor = new ShellExecutor("test", "sleep 777", Duration.ofMillis(100));
 
             StepVerifier.create(shellExecutor.getResults())
                         .then(() -> execute(shellExecutor))
@@ -130,11 +128,11 @@ class ShellExecutorIT {
 
         @BeforeEach
         void setUp() {
-            shellExecutor = new ShellExecutor("test", "sleep 20", ZERO, trigger, true);
+            shellExecutor = new ShellExecutor("test", "sleep 20", ZERO, true);
         }
 
         @Test
-        void shouldCancel() throws Exception {
+        void shouldCancel() {
             StepVerifier.create(shellExecutor.getResults())
                         .then(() -> execute(shellExecutor))
                         .then(shellExecutor::cancel)
@@ -144,12 +142,12 @@ class ShellExecutorIT {
         }
 
         @Test
-        void shouldNotFailOnCancelNotRunningProcess() throws Exception {
+        void shouldNotFailOnCancelNotRunningProcess() {
             shellExecutor.cancel();
         }
 
         @Test
-        void shouldNotFailCancelTwice() throws Exception {
+        void shouldNotFailCancelTwice() {
             StepVerifier.create(shellExecutor.getResults())
                         .then(() -> execute(shellExecutor))
                         .then(shellExecutor::cancel)

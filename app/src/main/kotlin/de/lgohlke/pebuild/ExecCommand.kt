@@ -13,7 +13,7 @@ class ExecCommand : Callable<Void> {
 
     override fun call(): Void? {
         val cmd = commands.joinToString(" ")
-        val executor = ShellExecutor("test", cmd, Duration.ZERO, JobTrigger("test"))
+        val executor = ShellExecutor("test", cmd, Duration.ZERO)
         val executionResult = executor.runCommand()
 
         if (!suppressExitCode) {

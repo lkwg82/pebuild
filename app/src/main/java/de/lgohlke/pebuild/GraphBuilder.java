@@ -33,11 +33,11 @@ public class GraphBuilder {
         ExecutionGraph graph = builder.build();
 
         // register as handler
-        graph.getJobs()
-             .forEach(j -> {
-                 val jobTrigger = j.getJobTrigger();
-                 jobTrigger.registerHandler(graph);
-             });
+//        graph.getJobs()
+//             .forEach(j -> {
+//                 val jobTrigger = j.getJobTrigger();
+//                 jobTrigger.registerHandler(graph);
+//             });
 
         return graph;
     }

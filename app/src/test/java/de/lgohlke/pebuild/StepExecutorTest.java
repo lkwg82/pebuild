@@ -48,13 +48,13 @@ class StepExecutorTest {
         // TODO
         void shouldNotifyCompletion() {
             LongAdder counter = new LongAdder();
-            JobTrigger jobTrigger = new JobTrigger("test") {
+            /*JobTrigger jobTrigger = new JobTrigger("test") {
 
                 @Override
                 public void triggerCompletion(TimingContext timeContext) {
                     counter.increment();
                 }
-            };
+            };*/
 
             StepExecutor executor = new StepExecutor("name", "", Duration.ZERO) {
             };

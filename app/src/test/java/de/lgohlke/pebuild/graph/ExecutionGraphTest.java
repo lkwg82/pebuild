@@ -89,9 +89,9 @@ class ExecutionGraphTest {
         }
         ExecutionGraph graph = builder.build();
 
-        graph.getJobs()
-             .forEach(j -> j.getJobTrigger()
-                            .registerHandler(graph));
+//        graph.getJobs()
+//             .forEach(j -> j.getJobTrigger()
+//                            .registerHandler(graph));
         return graph;
     }
 

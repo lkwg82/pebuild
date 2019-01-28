@@ -135,6 +135,23 @@ public class ReactorTest {
                     .verifyThenAssertThat(Duration.ofMillis(100));
     }
 
+    @Test
+    void errorHandling() {
+        Mono<Object> blocking = Mono.fromRunnable(() -> {
+            System.out.println("blocking");
+            try {
+                TimeUnit.MILLISECONDS.sleep(1_000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).timeout(ofMillis(500)).doOnError(error -> System.err.println("error: " + error));
+
+
+        StepVerifier.create(Flux.concat(blocking, Mono.just("after")))
+                    .expectError()
+                    .verifyThenAssertThat(ofMillis(2_000));
+    }
+
     private void blockingMethod() {
         log.warn("start block");
         try {

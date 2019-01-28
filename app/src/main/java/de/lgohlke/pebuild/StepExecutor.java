@@ -81,7 +81,7 @@ public abstract class StepExecutor {
 
     public void cancel() {
         // TODO
-        log.warn("cancel");
+        log.warn("cancel " + this);
         canceled.set(true);
     }
 

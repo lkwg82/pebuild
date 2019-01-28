@@ -44,7 +44,11 @@ class ExecutionGraph2Test {
         try {
             assertThat(executions).endsWith("d", "f", "b")
         } catch (e: AssertionError) {
-            assertThat(executions).endsWith("f", "b", "d")
+            try {
+                assertThat(executions).endsWith("f", "b", "d")
+            } catch (e: AssertionError) {
+                assertThat(executions).endsWith("f", "d", "b")
+            }
         }
     }
 
@@ -92,8 +96,7 @@ class ExecutionGraph2Test {
         assertThat(cancelCounter.sum()).isEqualTo(1L)
     }
 
-    // TODO
-    // @Test
+    @Test
     fun `graph execution timeout of step should cancel the graph`() {
         val executions = ArrayList<String>(2)
         val stepWithTimeout = object : StepExecutor("step", "command", ofMillis(1000)) {
@@ -111,12 +114,53 @@ class ExecutionGraph2Test {
         }
         stepAfter.waitFor(stepWithTimeout)
 
+        val stepParallel = object : DummyExecutor("side step") {
+            override fun runCommand(): ExecutionResult {
+                executions.add(name)
+                return super.runCommand()
+            }
+        }
+
         val graph = ExecutionGraph2.Builder()
-                .addJobs(stepWithTimeout, stepAfter)
+                .addJobs(stepWithTimeout, stepParallel, stepAfter)
                 .build()
         graph.execute()
 
-        assertThat(executions).containsExactly("step")
+        assertThat(executions).containsOnly("step", "side step")
+    }
+
+
+    @Test
+    fun `graph execution steps should not prevent timeouts`() {
+        val stepWithTimeout = object : StepExecutor("step", "command", ofMillis(1000)) {
+            override fun runCommand(): ExecutionResult {
+                TimeUnit.MILLISECONDS.sleep(5000)
+                return ExecutionResult(0)
+            }
+        }
+
+        val stepParallel = object : DummyExecutor("side step") {
+            override fun runCommand(): ExecutionResult {
+                TimeUnit.MILLISECONDS.sleep(15000)
+                return super.runCommand()
+            }
+        }
+
+        val graph = ExecutionGraph2.Builder()
+                .addJobs(stepWithTimeout, stepParallel)
+                .build()
+
+        val start = System.currentTimeMillis()
+        graph.execute()
+        val end = System.currentTimeMillis()
+
+        assertThat(end - start).isBetween(0, 1500)
+    }
+
+    // TODO
+//    @Test
+    internal fun `graph execution timeout of step should cancel other running steps`() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     //@Test

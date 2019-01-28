@@ -6,10 +6,9 @@ import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
-import reactor.core.scheduler.Schedulers
+import reactor.core.scheduler.Schedulers.elastic
 import java.time.Duration
 import java.util.LinkedHashSet
-import java.util.logging.Level
 import kotlin.collections.HashSet
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.component1
@@ -22,37 +21,29 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
     fun execute() {
         val cachedSteps = steps.map { step ->
             step to createCachedMono(step)
-        }
-                .toMap()
+        }.toMap()
 
-        val graph = createExecutionGraph(finalStep, cachedSteps).log(null, Level.WARNING)
+        val graph = createExecutionGraph(finalStep, cachedSteps).log()
 
         try {
-            graph.subscribeOn(Schedulers.parallel())
-                    .takeUntil { s -> s.isCanceled }
+            graph.onErrorResume { Mono.empty() }
                     .blockLast(timeout)
         } catch (e: java.lang.IllegalStateException) {
             System.err.println("execution timeout: " + e.message)
         }
     }
 
+    class StepError(val step: StepExecutor,
+                    val error: Throwable) : java.lang.RuntimeException(error)
+
     private fun createCachedMono(step: StepExecutor): Mono<StepExecutor> {
         return Mono.fromRunnable<StepExecutor>(step::execute)
+                .subscribeOn(elastic())
                 .timeout(step.timeout)
-                .doOnError { error ->
-                    run {
-                        println("error: $error on step $step")
-                        step.cancel()
-                    }
-                }
+                .onErrorMap { error -> StepError(step, error) }
+                .doOnError { step.cancel() }
                 .cache()
-                .doOnCancel {
-                    run {
-                        step.cancel()
-                        System.err.println("cancel $step")
-                    }
-                }
-                .onErrorResume { Mono.empty() }
+                .doOnCancel { step.cancel() }
     }
 
     private fun createExecutionGraph(step: StepExecutor,

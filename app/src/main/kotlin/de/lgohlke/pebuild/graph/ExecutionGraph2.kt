@@ -15,9 +15,9 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
-class ExecutionGraph2(private val steps: Collection<StepExecutor>,
+class ExecutionGraph2(val steps: Collection<StepExecutor>,
                       private val finalStep: StepExecutor,
-                      private val timeout: Duration) {
+                      val timeout: Duration) {
     fun execute() {
         val cachedSteps = steps.map { step ->
             step to createCachedMono(step)

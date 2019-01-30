@@ -2,7 +2,7 @@ package de.lgohlke.pebuild.graph
 
 import de.lgohlke.pebuild.ExecutionResult
 import de.lgohlke.pebuild.StepExecutor
-import de.lgohlke.pebuild.graph.ExecutionGraph2.Builder.DuplicateJobException
+import de.lgohlke.pebuild.graph.ExecutionGraph.Builder.DuplicateJobException
 import de.lgohlke.pebuild.graph.validators.CycleValidator.CycleDetected
 import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator.ReferencedJobsMissing
 import org.assertj.core.api.Assertions.assertThat
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 import kotlin.collections.ArrayList
 
-class ExecutionGraph2Test {
+class ExecutionGraphTest {
 
     @RepeatedTest(100)
     fun `should execute in correct orders`() {
@@ -35,7 +35,7 @@ class ExecutionGraph2Test {
         f.waitFor(e)
         b.waitFor(e, f)
 
-        ExecutionGraph2.Builder()
+        ExecutionGraph.Builder()
                 .addJobs(a, b, c, d, e, f)
                 .build()
                 .execute()
@@ -61,7 +61,7 @@ class ExecutionGraph2Test {
             }
         }
 
-        val graph = ExecutionGraph2.Builder()
+        val graph = ExecutionGraph.Builder()
                 .addJob(step)
                 .timeout(Duration.ofMillis(1000))
                 .build()
@@ -87,7 +87,7 @@ class ExecutionGraph2Test {
             }
         }
 
-        ExecutionGraph2.Builder()
+        ExecutionGraph.Builder()
                 .addJob(step)
                 .timeout(Duration.ofMillis(1000))
                 .build()
@@ -121,7 +121,7 @@ class ExecutionGraph2Test {
             }
         }
 
-        val graph = ExecutionGraph2.Builder()
+        val graph = ExecutionGraph.Builder()
                 .addJobs(stepWithTimeout, stepParallel, stepAfter)
                 .build()
         graph.execute()
@@ -146,7 +146,7 @@ class ExecutionGraph2Test {
             }
         }
 
-        val graph = ExecutionGraph2.Builder()
+        val graph = ExecutionGraph.Builder()
                 .addJobs(stepWithTimeout, stepParallel)
                 .build()
 
@@ -170,7 +170,7 @@ class ExecutionGraph2Test {
         val b = DummyExecutor("B")
         b.waitFor(a)
 
-        val graph = ExecutionGraph2.Builder()
+        val graph = ExecutionGraph.Builder()
                 .addJobs(a, b)
                 .build()
 
@@ -181,7 +181,7 @@ class ExecutionGraph2Test {
     fun `should fail adding the same step twice`() {
         val a = DummyExecutor("A")
 
-        val builder = ExecutionGraph2.Builder()
+        val builder = ExecutionGraph.Builder()
                 .addJob(a)
 
         assertThrows<DuplicateJobException> { builder.addJob(a) }
@@ -195,7 +195,7 @@ class ExecutionGraph2Test {
         a.waitFor(b)
         b.waitFor(a)
 
-        val builder = ExecutionGraph2.Builder()
+        val builder = ExecutionGraph.Builder()
                 .addJob(a)
                 .addJob(b)
 
@@ -210,7 +210,7 @@ class ExecutionGraph2Test {
         a.waitFor(b)
         b.waitFor(a)
 
-        val builder = ExecutionGraph2.Builder()
+        val builder = ExecutionGraph.Builder()
                 .addJob(a)
 
         assertThrows<ReferencedJobsMissing> { builder.build() }

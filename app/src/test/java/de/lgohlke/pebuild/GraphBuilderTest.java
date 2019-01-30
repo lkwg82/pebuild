@@ -1,6 +1,6 @@
 package de.lgohlke.pebuild;
 
-import de.lgohlke.pebuild.graph.ExecutionGraph2;
+import de.lgohlke.pebuild.graph.ExecutionGraph;
 import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +27,7 @@ class GraphBuilderTest {
             "  command: 'sleep 2'\n" +
             "  timeout: 10s\n" +
             "  waitfor: ['demo']";
-    private ExecutionGraph2 graph = GraphBuilder.build(yaml);
+    private ExecutionGraph graph = GraphBuilder.build(yaml);
     private Map<String, StepExecutor> jobMap = new HashMap<>();
 
     @BeforeEach

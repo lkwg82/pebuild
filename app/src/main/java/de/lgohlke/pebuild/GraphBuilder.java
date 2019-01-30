@@ -3,7 +3,7 @@ package de.lgohlke.pebuild;
 import de.lgohlke.pebuild.config.BuildConfigReader;
 import de.lgohlke.pebuild.config.dto.BuildConfig;
 import de.lgohlke.pebuild.config.dto.Step;
-import de.lgohlke.pebuild.graph.ExecutionGraph2;
+import de.lgohlke.pebuild.graph.ExecutionGraph;
 import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator;
 import lombok.NonNull;
 import lombok.val;
@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GraphBuilder {
-    static ExecutionGraph2 build(@NonNull String yaml) {
+    static ExecutionGraph build(@NonNull String yaml) {
 
         BuildConfig buildConfig = BuildConfigReader.parse(yaml);
 
@@ -28,12 +28,10 @@ public class GraphBuilder {
         resolveJobDependencies(stepMap, jobMap);
 
         Duration timeout = buildConfig.getOptions().getTimeoutAsDuration();
-        ExecutionGraph2.Builder builder = new ExecutionGraph2.Builder().timeout(timeout);
-        jobMap.values()
-              .forEach(builder::addJob);
-        ExecutionGraph2 graph = builder.build();
 
-        return graph;
+        return new ExecutionGraph.Builder().timeout(timeout)
+                                           .addJobs(jobMap.values().toArray(new StepExecutor[]{}))
+                                           .build();
     }
 
     private static void resolveJobDependencies(Map<String, Step> stepMap, Map<String, StepExecutor> jobMap) {

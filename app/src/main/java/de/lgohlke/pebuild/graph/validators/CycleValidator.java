@@ -9,9 +9,7 @@ import java.util.stream.Collectors;
 
 public class CycleValidator {
     public static void validate(Collection<StepExecutor> jobs) {
-        for (StepExecutor job : jobs) {
-            visitJob(job, new HashSet<>(), job);
-        }
+        jobs.forEach(job -> visitJob(job, new HashSet<>(), job));
     }
 
     private static void visitJob(StepExecutor job, Set<StepExecutor> visitedJobs, StepExecutor entryJob) {

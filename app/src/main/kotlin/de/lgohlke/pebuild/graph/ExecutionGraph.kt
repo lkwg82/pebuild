@@ -15,9 +15,9 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
-class ExecutionGraph2(val steps: Collection<StepExecutor>,
-                      private val finalStep: StepExecutor,
-                      val timeout: Duration) {
+class ExecutionGraph(val steps: Collection<StepExecutor>,
+                     private val finalStep: StepExecutor,
+                     val timeout: Duration) {
     fun execute() {
         val cachedSteps = steps.map { step ->
             step to createCachedMono(step)
@@ -102,11 +102,11 @@ class ExecutionGraph2(val steps: Collection<StepExecutor>,
             CycleValidator.validate(steps)
         }
 
-        fun build(): ExecutionGraph2 {
+        fun build(): ExecutionGraph {
             validate()
             val finalStep = createFinalStep(steps)
             steps.add(finalStep)
-            return ExecutionGraph2(steps, finalStep, timeout)
+            return ExecutionGraph(steps, finalStep, timeout)
         }
 
         class DuplicateJobException(message: String) : RuntimeException(message)

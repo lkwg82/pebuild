@@ -25,12 +25,9 @@ class ExecutionGraph2(private val steps: Collection<StepExecutor>,
 
         val graph = createExecutionGraph(finalStep, cachedSteps).log()
 
-        try {
-            graph.onErrorResume { Mono.empty() }
-                    .blockLast(timeout)
-        } catch (e: java.lang.IllegalStateException) {
-            System.err.println("execution timeout: " + e.message)
-        }
+        graph.timeout(timeout)
+                .onErrorResume { Mono.empty() }
+                .blockLast()
     }
 
     class StepError(val step: StepExecutor,

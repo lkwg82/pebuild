@@ -44,6 +44,7 @@ public abstract class StepExecutor {
             runCommand();
             log.info("completed command {}", command);
             long end = System.currentTimeMillis();
+            // TODO can be moved to the ExecutionGraph
             timingContext = new TimingContext(name, start, end);
 
             // TODO jobTrigger.triggerCompletion(timingContext);

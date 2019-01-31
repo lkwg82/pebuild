@@ -3,6 +3,7 @@ package de.lgohlke.pebuild
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
@@ -15,7 +16,7 @@ class CompleteIT {
         System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.pebuild.ShellExecutor", "DEBUG")
     }
 
-    @Test
+    @RepeatedTest(100)
     fun simpleRun() {
         Configuration.REPORT_DIRECTORY.overwrite("target/pebuild.d")
         System.setProperty("PEBUILD_FILE", "src/test/resources/integration/simple.pbuild.yml")

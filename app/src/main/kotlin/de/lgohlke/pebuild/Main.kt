@@ -71,11 +71,9 @@ class Main {
         EnvironmentConfigurer.mergeEnvironmentAndSystemProperties()
         Configuration.showConfig()
 
-        val content = readConfigFromFile()
+        val yamlConfig = readConfigFromFile()
 
-        val graph = GraphBuilder.build(content)
-
-        graph.execute()
+        GraphBuilder.build(yamlConfig).execute()
     }
 
     @Throws(IOException::class)
@@ -87,6 +85,4 @@ class Main {
         val path1 = Paths.get(path)
         return String(Files.readAllBytes(path1))
     }
-
-
 }

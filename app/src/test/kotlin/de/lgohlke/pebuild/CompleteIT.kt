@@ -6,6 +6,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
+import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 class CompleteIT {
     @BeforeEach
@@ -18,16 +20,40 @@ class CompleteIT {
 
     @RepeatedTest(100)
     fun simpleRun() {
-        Configuration.REPORT_DIRECTORY.overwrite("target/pebuild.d")
+        val targetPath = Paths.get("target", "pebuild.d_" + System.currentTimeMillis())
+        val absolutePath = targetPath.toFile().absolutePath
+
+        Configuration.REPORT_DIRECTORY.overwrite(absolutePath)
         System.setProperty("PEBUILD_FILE", "src/test/resources/integration/simple.pbuild.yml")
 
+        // action
         Main().run()
 
-        assertThat(Paths.get("target", "pebuild.d")).isDirectory()
+        assertThat(targetPath).isDirectory()
         // TODO how should the timings being captured
         // assertThat(Paths.get("target", "pebuild.d", "timings")).isRegularFile()
-        assertThat(Paths.get("target", "pebuild.d", "step.second.output")).isRegularFile()
-        assertThat(Paths.get("target", "pebuild.d", "step.second.output")).hasContent("STDOUT hello world")
+        val outputPath = Paths.get(absolutePath, "step.second.output")
+        assertThat(outputPath).isRegularFile()
+        retryWithDelay(20, Duration.ofMillis(100), Runnable { assertThat(outputPath).hasContent("STDOUT hello world") })
+    }
+
+    private fun retryWithDelay(retry: Int,
+                               delay: Duration,
+                               check: Runnable) {
+
+        var counter = 0
+
+        while (counter++ < retry) {
+            try {
+                check.run()
+            } catch (e: AssertionError) {
+                if (counter >= retry) {
+                    throw e
+                }
+                System.err.println("RETRY $counter")
+                TimeUnit.MILLISECONDS.sleep(delay.toMillis())
+            }
+        }
     }
 
     @Test

@@ -26,6 +26,10 @@ public abstract class StepExecutor {
         this.name = name;
         this.command = command;
         this.timeout = timeout;
+
+        if (timeout == Duration.ZERO) {
+            throw new IllegalArgumentException("unexpected zero timeout");
+        }
     }
 
     public StepExecutor(@NonNull String name, @NonNull String command) {

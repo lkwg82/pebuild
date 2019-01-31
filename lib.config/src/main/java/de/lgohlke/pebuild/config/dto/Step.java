@@ -10,7 +10,7 @@ import java.util.List;
 public class Step {
     private String name = "step";
     private String command;
-    private Duration timeout = Duration.ofMinutes(0);
+    private Duration timeout = Duration.ofDays(999);
 
     private List<String> waitfor = new ArrayList<>();
 

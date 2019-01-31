@@ -8,7 +8,6 @@
         <option value="noActionIfCompileErrors" />
         <option value="organizeImports" />
         <option value="reformat" />
-        <option value="compile" />
         <option value="missingOverrideAnnotation" />
         <option value="useBlocks" />
         <option value="unnecessaryThis" />

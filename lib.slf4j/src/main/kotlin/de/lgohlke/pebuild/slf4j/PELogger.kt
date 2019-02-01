@@ -5,12 +5,13 @@ import org.slf4j.Marker
 import org.slf4j.event.Level
 import org.slf4j.event.Level.*
 import org.slf4j.helpers.MessageFormatter
+import java.io.OutputStream
 import java.io.PrintStream
 import java.text.SimpleDateFormat
 import java.util.*
 
 class PELogger(private val clazz: String,
-               private val outStream: PrintStream = System.err,
+               private val outStream: OutputStream = System.err,
                private val properties: Properties = System.getProperties()) : Logger {
 
     val logPrefix = "org.slf4j.simpleLogger"
@@ -49,8 +50,9 @@ class PELogger(private val clazz: String,
 
     private fun printOut(line: String,
                          t: Throwable? = null) {
-        outStream.println(line)
-        t?.printStackTrace(outStream)
+        val printStream = PrintStream(outStream)
+        printStream.println(line)
+        t?.printStackTrace(printStream)
     }
 
     private fun isLevelEnabled(level: Level): Boolean {

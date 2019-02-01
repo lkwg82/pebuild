@@ -6,9 +6,9 @@ unamestr=`uname`
 if [[ ! -f .graalvm/graalvm-ce.tar.gz ]]; then
     mkdir -p .graalvm
     if [[ "$unamestr" == 'Linux' ]]; then
-      url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc10/graalvm-ce-1.0.0-rc10-linux-amd64.tar.gz
+      url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc11/graalvm-ce-1.0.0-rc11-linux-amd64.tar.gz
     elif [[ "$unamestr" == 'Darwin' ]]; then
-      url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc10/graalvm-ce-1.0.0-rc10-macos-amd64.tar.gz
+      url=https://github.com/oracle/graal/releases/download/vm-1.0.0-rc11/graalvm-ce-1.0.0-rc11-macos-amd64.tar.gz
     fi
 
     wget -O .graalvm/graalvm-ce.tar.gz ${url}

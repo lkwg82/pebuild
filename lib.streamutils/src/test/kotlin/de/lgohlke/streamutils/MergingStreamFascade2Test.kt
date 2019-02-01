@@ -56,13 +56,7 @@ class MergingStreamFascade2Test {
     private fun fascade(inputStreams: Array<PrefixedInputStream>,
                         stdout: PrintStream,
                         outputStreams: Array<OutputStream>): MergingStreamFascade2 {
-        return MergingStreamFascade2
-            .Builder()
-            .name("test")
-            .inputStreams(inputStreams)
-            .stdout(stdout)
-            .outputStreams(outputStreams)
-            .build()
+        return MergingStreamFascade2.create("test", inputStreams, stdout, outputStreams)
     }
 
     @RepeatedTest(10)

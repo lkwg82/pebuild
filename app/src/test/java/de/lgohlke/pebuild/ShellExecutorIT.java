@@ -3,10 +3,7 @@ package de.lgohlke.pebuild;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -15,11 +12,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static java.time.Duration.ofDays;
 import static org.assertj.core.api.Assertions.assertThat;
 import static reactor.core.scheduler.Schedulers.elastic;
 
@@ -49,16 +46,17 @@ class ShellExecutorIT {
         FileUtils.deleteDirectory(tempDirectory.toFile());
     }
 
-    @Test
+    @RepeatedTest(50)
     void captureOutputAsFile() throws Exception {
-        val command = "echo hello err >&2; echo hello out";
-        val shellExecutor = new ShellExecutor("test", command, ofDays(999), true);
+        val random = new SecureRandom().nextInt();
+        val command = "echo hello err >&2; echo hello out " + random;
+        val shellExecutor = new ShellExecutor("test", command);
 
         shellExecutor.runCommand();
 
         val output = Paths.get(Configuration.REPORT_DIRECTORY.value(), "step.test.output");
         val content = new String(Files.readAllBytes(output));
-        assertThat(content).contains("hello out");
+        assertThat(content).contains("hello out " + random);
     }
 
     @Test
@@ -128,7 +126,7 @@ class ShellExecutorIT {
 
         @BeforeEach
         void setUp() {
-            shellExecutor = new ShellExecutor("test", "sleep 20", ofDays(999), true);
+            shellExecutor = new ShellExecutor("test", "sleep 20");
         }
 
         @Test

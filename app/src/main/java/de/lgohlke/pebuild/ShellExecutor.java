@@ -22,20 +22,14 @@ class ShellExecutor extends StepExecutor {
     @Getter
     private final DirectProcessor<ExecutionResult> results = DirectProcessor.create();
 
-    private final boolean syncAfter;
     private Process process;
 
     ShellExecutor(String name, String command, Duration timeout) {
-        this(name, command, timeout, false);
+        super(name, command, timeout);
     }
 
     ShellExecutor(String name, String command) {
-        this(name, command, Duration.ofDays(999), false);
-    }
-
-    ShellExecutor(String name, String command, Duration timeout, boolean syncAfter) {
-        super(name, command, timeout);
-        this.syncAfter = syncAfter;
+        this(name, command, Duration.ofDays(999));
     }
 
     @Override
@@ -60,28 +54,16 @@ class ShellExecutor extends StepExecutor {
             PrefixedInputStream[] inputStreams = {stdout, stderr};
             OutputStream[] outputStreams = {fout};
 
-            try (val ignored = MergingStreamFascade2.create(getName(), inputStreams, System.out, outputStreams)) {
-                int exitCode = waitForProcess(process);
-                log.debug("finished with exit code {}", exitCode);
+            MergingStreamFascade2.create(getName(), inputStreams, System.out, outputStreams);
 
-//                if (streamFascade.isStreaming()) {
-//                    streamFascade.cancel();
-//                    log.warn("blocking sub process: '{}'", getCommand());
-//                }
+            int exitCode = waitForProcess(process);
+            log.debug("finished with exit code {}", exitCode);
 
-                ExecutionResult executionResult = new ExecutionResult(exitCode);
-                results.onNext(executionResult);
-                results.onComplete();
-                process = null;
-                return executionResult;
-            } finally {
-                // this is only for tests when immediately the output needs to be verified
-                if (syncAfter) {
-                    fout.flush();
-                    fout.getFD()
-                        .sync();
-                }
-            }
+            ExecutionResult executionResult = new ExecutionResult(exitCode);
+            results.onNext(executionResult);
+            results.onComplete();
+            process = null;
+            return executionResult;
         }
     }
 

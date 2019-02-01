@@ -2,13 +2,11 @@ package de.lgohlke.pebuild;
 
 import de.lgohlke.streamutils.MergingStreamFascade2;
 import de.lgohlke.streamutils.PrefixedInputStream;
-import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
-import reactor.core.publisher.DirectProcessor;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -19,9 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 class ShellExecutor extends StepExecutor {
-    @Getter
-    private final DirectProcessor<ExecutionResult> results = DirectProcessor.create();
-
     private Process process;
 
     ShellExecutor(String name, String command, Duration timeout) {
@@ -60,8 +55,6 @@ class ShellExecutor extends StepExecutor {
             log.debug("finished with exit code {}", exitCode);
 
             ExecutionResult executionResult = new ExecutionResult(exitCode);
-            results.onNext(executionResult);
-            results.onComplete();
             process = null;
             return executionResult;
         }

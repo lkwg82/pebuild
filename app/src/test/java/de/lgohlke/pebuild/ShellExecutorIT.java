@@ -1,10 +1,9 @@
 package de.lgohlke.pebuild;
 
-import lombok.SneakyThrows;
 import lombok.val;
 import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -76,8 +75,9 @@ class ShellExecutorIT {
         void shouldPropagateExitCodeOnFailedCommand() {
             val shellExecutor = new ShellExecutor("test", "exit 23");
 
-            StepVerifier.create(shellExecutor.getResults())
-                        .then(() -> execute(shellExecutor))
+            val mono = Mono.fromCallable(shellExecutor::runCommand);
+
+            StepVerifier.create(mono)
                         .expectNext(new ExecutionResult(23))
                         .expectComplete()
                         .verify(WAIT_MAX_500_MS);
@@ -87,8 +87,9 @@ class ShellExecutorIT {
         void shouldPropagateExitCodeOnWrongCommand() {
             val shellExecutor = new ShellExecutor("test", "kjakdhaksdhk");
 
-            StepVerifier.create(shellExecutor.getResults())
-                        .then(() -> execute(shellExecutor))
+            val mono = Mono.fromCallable(shellExecutor::runCommand);
+
+            StepVerifier.create(mono)
                         .expectNext(new ExecutionResult(127))
                         .expectComplete()
                         .verify(WAIT_MAX_500_MS);
@@ -101,8 +102,9 @@ class ShellExecutorIT {
         void exitsBeforeTimeout() {
             val shellExecutor = new ShellExecutor("test", "exit 3", Duration.ofSeconds(1));
 
-            StepVerifier.create(shellExecutor.getResults())
-                        .then(() -> execute(shellExecutor))
+            val mono = Mono.fromCallable(shellExecutor::runCommand);
+
+            StepVerifier.create(mono)
                         .expectNext(new ExecutionResult(3))
                         .expectComplete()
                         .verify(WAIT_MAX_500_MS);
@@ -112,8 +114,9 @@ class ShellExecutorIT {
         void exitsWithTimeoutButProcessIsKindOfBlocking() {
             val shellExecutor = new ShellExecutor("test", "sleep 777", Duration.ofMillis(100));
 
-            StepVerifier.create(shellExecutor.getResults())
-                        .then(() -> execute(shellExecutor))
+            val mono = Mono.fromCallable(shellExecutor::runCommand);
+
+            StepVerifier.create(mono)
                         .expectNext(new ExecutionResult(128 + 15))
                         .expectComplete()
                         .verify(WAIT_MAX_500_MS);
@@ -131,12 +134,30 @@ class ShellExecutorIT {
 
         @Test
         void shouldCancel() {
-            StepVerifier.create(shellExecutor.getResults())
-                        .then(() -> execute(shellExecutor))
+
+            val mono = getMono(shellExecutor);
+
+            StepVerifier.create(mono)
+                        .then(wait100ms())
                         .then(shellExecutor::cancel)
                         .expectNext(new ExecutionResult(143))
                         .expectComplete()
                         .verify(WAIT_MAX_500_MS);
+        }
+
+        @NotNull
+        private Runnable wait100ms() {
+            return () -> {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            };
+        }
+
+        private Mono<ExecutionResult> getMono(ShellExecutor shellExecutor) {
+            return Mono.fromCallable(shellExecutor::runCommand).subscribeOn(elastic());
         }
 
         @Test
@@ -146,30 +167,16 @@ class ShellExecutorIT {
 
         @Test
         void shouldNotFailCancelTwice() {
-            StepVerifier.create(shellExecutor.getResults())
-                        .then(() -> execute(shellExecutor))
+
+            val mono = getMono(shellExecutor);
+
+            StepVerifier.create(mono)
+                        .then(wait100ms())
                         .then(shellExecutor::cancel)
                         .then(shellExecutor::cancel)
                         .expectNext(new ExecutionResult(143))
                         .expectComplete()
                         .verify(WAIT_MAX_500_MS);
         }
-    }
-
-    @SneakyThrows
-    private void execute(ShellExecutor shellExecutor) {
-        Flux.defer(() -> execution(shellExecutor).subscribeOn(elastic()))
-            .subscribe();
-        TimeUnit.MILLISECONDS.sleep((long) 150);
-    }
-
-    private Mono<Object> execution(ShellExecutor shellExecutor) {
-        return Mono.fromRunnable(() -> {
-            try {
-                shellExecutor.runCommand();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
     }
 }

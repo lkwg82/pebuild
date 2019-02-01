@@ -7,7 +7,6 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
-import java.util.concurrent.TimeUnit
 
 
 class MergingStreamFascade2Test {
@@ -73,7 +72,6 @@ class MergingStreamFascade2Test {
 
     private fun doSomeThing() {
         log.warn("do something")
-        TimeUnit.MILLISECONDS.sleep(50)
     }
 
     @RepeatedTest(10)

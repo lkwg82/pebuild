@@ -3,7 +3,6 @@ package de.lgohlke.streamutils
 import org.reactivestreams.Subscriber
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
-import reactor.core.scheduler.Schedulers
 import java.io.OutputStream
 import java.io.PrintStream
 import java.util.*
@@ -45,7 +44,7 @@ class MergingStreamFascade2(private val jobName: String,
         connectableFlux = source.publish().autoConnect(outputs.size)
 
         outputs.forEach { out ->
-            connectableFlux.subscribeOn(Schedulers.elastic()).subscribe { out.onNext(it) }
+            connectableFlux.subscribe { out.onNext(it) }
         }
     }
 

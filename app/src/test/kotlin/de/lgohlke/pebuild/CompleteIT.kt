@@ -6,8 +6,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
-import java.time.Duration
-import java.util.concurrent.TimeUnit
 
 class CompleteIT {
     @BeforeEach
@@ -34,26 +32,7 @@ class CompleteIT {
         // assertThat(Paths.get("target", "pebuild.d", "timings")).isRegularFile()
         val outputPath = Paths.get(absolutePath, "step.second.output")
         assertThat(outputPath).isRegularFile()
-        retryWithDelay(20, Duration.ofMillis(100), Runnable { assertThat(outputPath).hasContent("STDOUT hello world") })
-    }
-
-    private fun retryWithDelay(retry: Int,
-                               delay: Duration,
-                               check: Runnable) {
-
-        var counter = 0
-
-        while (counter++ < retry) {
-            try {
-                check.run()
-            } catch (e: AssertionError) {
-                if (counter >= retry) {
-                    throw e
-                }
-                System.err.println("RETRY $counter")
-                TimeUnit.MILLISECONDS.sleep(delay.toMillis())
-            }
-        }
+        assertThat(outputPath).hasContent("STDOUT hello world")
     }
 
     @Test

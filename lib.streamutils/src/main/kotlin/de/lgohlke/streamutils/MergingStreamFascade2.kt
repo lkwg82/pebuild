@@ -3,9 +3,12 @@ package de.lgohlke.streamutils
 import org.reactivestreams.Subscriber
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
+import reactor.core.scheduler.Schedulers.elastic
 import java.io.OutputStream
 import java.io.PrintStream
 import java.util.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * reads from many InputStreams and write them to
@@ -40,12 +43,16 @@ class MergingStreamFascade2(private val jobName: String,
         val outputs = ArrayList<Subscriber<String>>(outputStreams.map { OutputStreamer(it) })
         outputs.add(StdoutStreamer(jobName, stdout))
 
-        val source = Flux.merge(inputs)
-        connectableFlux = source.publish().autoConnect(outputs.size)
+        val countDownLatch = CountDownLatch(outputs.size)
 
-        outputs.forEach { out ->
-            connectableFlux.subscribe { out.onNext(it) }
-        }
+        val source = Flux.merge(inputs)
+        connectableFlux =
+                source.publish().autoConnect(outputs.size).doOnSubscribe { countDownLatch.countDown() }
+
+        outputs.forEach { out -> connectableFlux.subscribeOn(elastic()).subscribe { out.onNext(it) } }
+
+        countDownLatch.await()
+        TimeUnit.MILLISECONDS.sleep(50)
     }
 
     override fun close() {

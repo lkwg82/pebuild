@@ -29,6 +29,10 @@ class ShellExecutor extends StepExecutor {
         this(name, command, timeout, false);
     }
 
+    ShellExecutor(String name, String command) {
+        this(name, command, Duration.ofDays(999), false);
+    }
+
     ShellExecutor(String name, String command, Duration timeout, boolean syncAfter) {
         super(name, command, timeout);
         this.syncAfter = syncAfter;

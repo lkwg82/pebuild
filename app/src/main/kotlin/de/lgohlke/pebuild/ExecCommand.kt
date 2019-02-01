@@ -1,7 +1,6 @@
 package de.lgohlke.pebuild
 
 import picocli.CommandLine
-import java.time.Duration
 import java.util.concurrent.Callable
 
 @CommandLine.Command(name = "exec", aliases = ["e"], mixinStandardHelpOptions = true)
@@ -13,7 +12,7 @@ class ExecCommand : Callable<Void> {
 
     override fun call(): Void? {
         val cmd = commands.joinToString(" ")
-        val executor = ShellExecutor("test", cmd, Duration.ZERO)
+        val executor = ShellExecutor("test", cmd)
         val executionResult = executor.runCommand()
 
         if (!suppressExitCode) {

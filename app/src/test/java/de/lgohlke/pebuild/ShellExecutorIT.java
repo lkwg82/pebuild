@@ -19,7 +19,7 @@ import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static java.time.Duration.ZERO;
+import static java.time.Duration.ofDays;
 import static org.assertj.core.api.Assertions.assertThat;
 import static reactor.core.scheduler.Schedulers.elastic;
 
@@ -30,7 +30,7 @@ class ShellExecutorIT {
     static {
         System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.Channel", "DEBUG");
         System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.MergingStreamFascade", "DEBUG");
-        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.DecoratingStreamer", "DEBUG");
+        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.DecoratingStreamer2", "DEBUG");
 
         System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.pebuild.ShellExecutor", "DEBUG");
     }
@@ -52,7 +52,7 @@ class ShellExecutorIT {
     @Test
     void captureOutputAsFile() throws Exception {
         val command = "echo hello err >&2; echo hello out";
-        val shellExecutor = new ShellExecutor("test", command, ZERO, true);
+        val shellExecutor = new ShellExecutor("test", command, ofDays(999), true);
 
         shellExecutor.runCommand();
 
@@ -66,7 +66,7 @@ class ShellExecutorIT {
         Configuration.REPORT_DIRECTORY.overwrite(tempDirectory.toAbsolutePath()
                                                               .toString() + "/x/s");
 
-        val shellExecutor = new ShellExecutor("test", "env", ZERO);
+        val shellExecutor = new ShellExecutor("test", "env");
 
         shellExecutor.runCommand();
     }
@@ -76,7 +76,7 @@ class ShellExecutorIT {
 
         @Test
         void shouldPropagateExitCodeOnFailedCommand() {
-            val shellExecutor = new ShellExecutor("test", "exit 23", ZERO);
+            val shellExecutor = new ShellExecutor("test", "exit 23");
 
             StepVerifier.create(shellExecutor.getResults())
                         .then(() -> execute(shellExecutor))
@@ -87,7 +87,7 @@ class ShellExecutorIT {
 
         @Test
         void shouldPropagateExitCodeOnWrongCommand() {
-            val shellExecutor = new ShellExecutor("test", "kjakdhaksdhk", ZERO);
+            val shellExecutor = new ShellExecutor("test", "kjakdhaksdhk");
 
             StepVerifier.create(shellExecutor.getResults())
                         .then(() -> execute(shellExecutor))
@@ -128,7 +128,7 @@ class ShellExecutorIT {
 
         @BeforeEach
         void setUp() {
-            shellExecutor = new ShellExecutor("test", "sleep 20", ZERO, true);
+            shellExecutor = new ShellExecutor("test", "sleep 20", ofDays(999), true);
         }
 
         @Test

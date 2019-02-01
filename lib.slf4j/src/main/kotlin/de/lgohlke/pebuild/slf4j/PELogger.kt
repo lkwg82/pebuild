@@ -5,12 +5,12 @@ import org.slf4j.Marker
 import org.slf4j.event.Level
 import org.slf4j.event.Level.*
 import org.slf4j.helpers.MessageFormatter
-import java.io.OutputStream
+import java.io.PrintStream
 import java.text.SimpleDateFormat
 import java.util.*
 
 class PELogger(private val clazz: String,
-               private val outStream: OutputStream = System.err,
+               private val outStream: PrintStream = System.err,
                private val properties: Properties = System.getProperties()) : Logger {
 
     val logPrefix = "org.slf4j.simpleLogger"
@@ -33,21 +33,24 @@ class PELogger(private val clazz: String,
         }
 
         val buf = StringBuilder(32)
-                .append(formattedDate)
-                .append(" [")
-                .append(Thread.currentThread().name)
-                .append("] ")
-                .append(level)
-                .append(' ')
-                .append(clazz)
-                .append(" - ")
-                .append(message)
+            .append(formattedDate)
+            .append(" [")
+            .append(Thread.currentThread().name)
+            .append("] ")
+            .append(level)
+            .append(' ')
+            .append(clazz)
+            .append(" - ")
+            .append(message)
 
-        printOut(buf.toString())
+        printOut(buf.toString(), t)
+
     }
 
-    private fun printOut(line: String) {
-        outStream.write((line + "\n").toByteArray())
+    private fun printOut(line: String,
+                         t: Throwable? = null) {
+        outStream.println(line)
+        t?.printStackTrace(outStream)
     }
 
     private fun isLevelEnabled(level: Level): Boolean {

@@ -24,7 +24,11 @@ internal class DecoratingStreamer2(private val prefixedInputStream: PrefixedInpu
                 p0.onComplete()
             }
         } catch (e: Exception) {
-            log.error(e.message, e)
+            if (e is NullPointerException) {
+                log.error("", e)
+            } else {
+                log.error(e.message, e)
+            }
             p0.onError(e)
         }
         log.warn("scanner closed: {}", prefix)

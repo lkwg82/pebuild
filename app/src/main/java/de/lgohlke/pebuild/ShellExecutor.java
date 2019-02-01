@@ -1,6 +1,6 @@
 package de.lgohlke.pebuild;
 
-import de.lgohlke.streamutils.MergingStreamFascade;
+import de.lgohlke.streamutils.MergingStreamFascade2;
 import de.lgohlke.streamutils.PrefixedInputStream;
 import lombok.Getter;
 import lombok.NonNull;
@@ -60,14 +60,14 @@ class ShellExecutor extends StepExecutor {
             PrefixedInputStream[] inputStreams = {stdout, stderr};
             OutputStream[] outputStreams = {fout};
 
-            try (val streamFascade = MergingStreamFascade.create(getName(), inputStreams, System.out, outputStreams)) {
+            try (val ignored = MergingStreamFascade2.create(getName(), inputStreams, System.out, outputStreams)) {
                 int exitCode = waitForProcess(process);
                 log.debug("finished with exit code {}", exitCode);
 
-                if (streamFascade.isStreaming()) {
-                    streamFascade.cancel();
-                    log.warn("blocking sub process: '{}'", getCommand());
-                }
+//                if (streamFascade.isStreaming()) {
+//                    streamFascade.cancel();
+//                    log.warn("blocking sub process: '{}'", getCommand());
+//                }
 
                 ExecutionResult executionResult = new ExecutionResult(exitCode);
                 results.onNext(executionResult);

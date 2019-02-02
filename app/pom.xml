@@ -13,7 +13,7 @@
     <artifactId>app</artifactId>
 
     <properties>
-        <picocli.version>3.8.2</picocli.version>
+        <picocli.version>3.9.3</picocli.version>
     </properties>
 
     <build>

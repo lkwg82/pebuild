@@ -49,7 +49,7 @@ class ShellExecutor extends StepExecutor {
             PrefixedInputStream[] inputStreams = {stdout, stderr};
             OutputStream[] outputStreams = {fout};
 
-            MergingStreamFascade2.create(getName(), inputStreams, System.out, outputStreams);
+            new MergingStreamFascade2(getName(), inputStreams, System.out, outputStreams).install();
 
             int exitCode = waitForProcess(process);
             log.debug("finished with exit code {}", exitCode);

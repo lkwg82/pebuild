@@ -32,9 +32,7 @@ class MergingStreamFascade2Test {
     fun `should have STDOUT output collected in file`() {
         val inputStreams = createInputStreams("ok", "")
 
-        fascade(inputStreams, System.out, arrayOf(fileOutputStream)).use {
-            doSomeThing()
-        }
+        installFascade(inputStreams, System.out, arrayOf(fileOutputStream))
 
         val content = String(fileOutputStream.toByteArray())
         assertThat(content).contains("STDOUT ok")
@@ -44,43 +42,35 @@ class MergingStreamFascade2Test {
     fun `should have STDOUT output printed to System out`() {
         val inputStreams = createInputStreams("ok", "")
 
-        fascade(inputStreams, stdout, arrayOf()).use {
-            doSomeThing()
-        }
+        installFascade(inputStreams, stdout, arrayOf())
 
         val content = String(stdoutIntern.toByteArray())
         assertThat(content).contains("[test] STDOUT ok")
     }
 
-    private fun fascade(inputStreams: Array<PrefixedInputStream>,
-                        stdout: PrintStream,
-                        outputStreams: Array<OutputStream>): MergingStreamFascade2 {
-        return MergingStreamFascade2.create("test", inputStreams, stdout, outputStreams)
+    private fun installFascade(inputStreams: Array<PrefixedInputStream>,
+                               stdout: PrintStream,
+                               outputStreams: Array<OutputStream>): MergingStreamFascade2 {
+        val fascade2 = MergingStreamFascade2("test", inputStreams, stdout, outputStreams)
+        fascade2.install()
+        return fascade2
     }
 
     @RepeatedTest(10)
     fun `should have STDERR output printed to SystemOut`() {
         val inputStreams = createInputStreams("", "err")
 
-        fascade(inputStreams, stdout, arrayOf()).use {
-            doSomeThing()
-        }
+        installFascade(inputStreams, stdout, arrayOf())
 
         val content = String(stdoutIntern.toByteArray())
         assertThat(content).contains("[test] STDERR err")
-    }
-
-    private fun doSomeThing() {
-        log.warn("do something")
     }
 
     @RepeatedTest(10)
     fun `should have STDERR output collected in filestream`() {
         val inputStreams = createInputStreams("", "err")
 
-        fascade(inputStreams, stdout, arrayOf(fileOutputStream)).use {
-            doSomeThing()
-        }
+        installFascade(inputStreams, stdout, arrayOf(fileOutputStream))
 
         val content = String(fileOutputStream.toByteArray())
         assertThat(content).contains("STDERR err")

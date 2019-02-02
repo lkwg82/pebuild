@@ -39,7 +39,7 @@ class MergingStreamFascade2(private val jobName: String,
 
     private fun start() {
 
-        val inputs = Flux.fromIterable(inputStreams.map { DecoratingStreamer2(it) })
+        val inputs = Flux.fromIterable(inputStreams.map { DecoratingStreamer(it) })
         val outputs = ArrayList<Subscriber<String>>(outputStreams.map { OutputStreamer(it) })
         outputs.add(StdoutStreamer(jobName, stdout))
 

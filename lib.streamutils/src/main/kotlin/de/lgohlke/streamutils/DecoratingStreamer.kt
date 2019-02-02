@@ -5,7 +5,7 @@ import reactor.core.CoreSubscriber
 import reactor.core.publisher.Flux
 import java.util.*
 
-internal class DecoratingStreamer2(private val prefixedInputStream: PrefixedInputStream) : Flux<String>() {
+internal class DecoratingStreamer(private val prefixedInputStream: PrefixedInputStream) : Flux<String>() {
     companion object {
         @Suppress("JAVA_CLASS_ON_COMPANION")
         private val log = LoggerFactory.getLogger(javaClass.enclosingClass)

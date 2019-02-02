@@ -31,21 +31,21 @@ class ShellExecutor extends StepExecutor {
     @Override
     public ExecutionResult runCommand() throws Exception {
         process = startProcess();
-        Path outputFile = prepareOutputFile();
+        val outputFile = prepareOutputFile();
 
         try (val fout = new FileOutputStream(outputFile.toFile())) {
-            PrefixedInputStream stdout = new PrefixedInputStream(process.getInputStream(), "STDOUT");
-            PrefixedInputStream stderr = new PrefixedInputStream(process.getErrorStream(), "STDERR");
+            val stdout = new PrefixedInputStream(process.getInputStream(), "STDOUT");
+            val stderr = new PrefixedInputStream(process.getErrorStream(), "STDERR");
 
             PrefixedInputStream[] inputStreams = {stdout, stderr};
             OutputStream[] outputStreams = {fout};
 
             new MergingStreamFascade(getName(), inputStreams, System.out, outputStreams).install();
 
-            int exitCode = waitForProcess(process);
+            val exitCode = waitForProcess(process);
             log.debug("finished with exit code {}", exitCode);
 
-            ExecutionResult executionResult = new ExecutionResult(exitCode);
+            val executionResult = new ExecutionResult(exitCode);
             process = null;
             return executionResult;
         }

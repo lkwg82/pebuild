@@ -15,10 +15,10 @@ import java.util.concurrent.TimeUnit
  * - a PrintStream (mostly System.out)
  * - and many other OutputStreams
  */
-class MergingStreamFascade2(private val jobName: String,
-                            private val inputStreams: Array<PrefixedInputStream>,
-                            private val stdout: PrintStream,
-                            private val outputStreams: Array<OutputStream>) {
+class MergingStreamFascade(private val jobName: String,
+                           private val inputStreams: Array<PrefixedInputStream>,
+                           private val stdout: PrintStream,
+                           private val outputStreams: Array<OutputStream>) {
     companion object {
         @Suppress("JAVA_CLASS_ON_COMPANION")
         private val log = LoggerFactory.getLogger(javaClass.enclosingClass)
@@ -27,7 +27,6 @@ class MergingStreamFascade2(private val jobName: String,
     private var connectableFlux: Flux<String> = Flux.empty()
 
     fun install() {
-
         val inputs = Flux.fromIterable(inputStreams.map { DecoratingStreamer(it) })
         val outputs = ArrayList<Subscriber<String>>(outputStreams.map { OutputStreamer(it) })
         outputs.add(StdoutStreamer(jobName, stdout))

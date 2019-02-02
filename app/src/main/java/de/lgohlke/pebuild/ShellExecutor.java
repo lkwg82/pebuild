@@ -1,15 +1,16 @@
 package de.lgohlke.pebuild;
 
-import de.lgohlke.streamutils.MergingStreamFascade2;
+import de.lgohlke.streamutils.MergingStreamFascade;
 import de.lgohlke.streamutils.PrefixedInputStream;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.nio.charset.Charset;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -32,16 +33,6 @@ class ShellExecutor extends StepExecutor {
         process = startProcess();
         Path outputFile = prepareOutputFile();
 
-        if (!process.isAlive()) {
-            // TODO needs test
-            StringWriter errOutput = new StringWriter();
-            IOUtils.copy(process.getErrorStream(), errOutput, Charset.defaultCharset());
-            log.error("failed to start: {}", errOutput.toString());
-            val result = new ExecutionResult(process.exitValue());
-            process = null;
-            return result;
-        }
-
         try (val fout = new FileOutputStream(outputFile.toFile())) {
             PrefixedInputStream stdout = new PrefixedInputStream(process.getInputStream(), "STDOUT");
             PrefixedInputStream stderr = new PrefixedInputStream(process.getErrorStream(), "STDERR");
@@ -49,7 +40,7 @@ class ShellExecutor extends StepExecutor {
             PrefixedInputStream[] inputStreams = {stdout, stderr};
             OutputStream[] outputStreams = {fout};
 
-            new MergingStreamFascade2(getName(), inputStreams, System.out, outputStreams).install();
+            new MergingStreamFascade(getName(), inputStreams, System.out, outputStreams).install();
 
             int exitCode = waitForProcess(process);
             log.debug("finished with exit code {}", exitCode);

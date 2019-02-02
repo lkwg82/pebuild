@@ -9,7 +9,7 @@ import java.io.OutputStream
 import java.io.PrintStream
 
 
-class MergingStreamFascade2Test {
+class MergingStreamFascadeTest {
     companion object {
         @Suppress("JAVA_CLASS_ON_COMPANION")
         private val log = LoggerFactory.getLogger(javaClass.enclosingClass)
@@ -50,8 +50,8 @@ class MergingStreamFascade2Test {
 
     private fun installFascade(inputStreams: Array<PrefixedInputStream>,
                                stdout: PrintStream,
-                               outputStreams: Array<OutputStream>): MergingStreamFascade2 {
-        val fascade2 = MergingStreamFascade2("test", inputStreams, stdout, outputStreams)
+                               outputStreams: Array<OutputStream>): MergingStreamFascade {
+        val fascade2 = MergingStreamFascade("test", inputStreams, stdout, outputStreams)
         fascade2.install()
         return fascade2
     }

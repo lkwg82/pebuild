@@ -12,19 +12,22 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 internal class EnvironmentConfigurerTest {
-    @BeforeEach
-    fun setUp() {
-        EnvironmentConfigurer.mergeEnvironmentAndSystemProperties()
+    init {
+        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke", "DEBUG")
     }
 
     @Test
     fun shouldMergeEnvAndSystemProperties() {
+        EnvironmentConfigurer.mergeEnvironmentAndSystemProperties()
+
         assertThat(System.getProperty("HOME")).isNotEmpty()
     }
 
     @Test
     fun shouldPriotizeSystemProperties() {
         System.setProperty("HOME", "x")
+
+        EnvironmentConfigurer.mergeEnvironmentAndSystemProperties()
 
         assertThat(System.getProperty("HOME")).isEqualTo("x")
     }
@@ -39,8 +42,7 @@ internal class EnvironmentConfigurerTest {
         @Throws(IOException::class)
         fun setUp() {
             val directory = Files.createTempDirectory("aasdasd")
-            workingDirectory = directory.toFile()
-                    .canonicalPath
+            workingDirectory = directory.toFile().canonicalPath
             environmentConfigurer = EnvironmentConfigurer(workingDirectory!!)
         }
 

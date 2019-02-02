@@ -14,11 +14,10 @@ internal class EnvironmentConfigurer(private val cwd: String = System.getPropert
             val getenv = System.getenv()
 
             getenv.forEach { name, value ->
-                if (System.getProperties()
-                                .contains(name)) {
+                if (System.getProperties().containsKey(name)) {
                     log.debug("can not overwrite: $name")
                 } else {
-                    log.debug("add '$name' into System.properties")
+                    log.debug("add '$name':'$value' into System.properties")
                     System.setProperty(name, value)
                 }
             }
@@ -26,9 +25,7 @@ internal class EnvironmentConfigurer(private val cwd: String = System.getPropert
     }
 
     fun configureMeaningfullDefaults() {
-        if (Paths.get(cwd, "pom.xml")
-                        .toFile()
-                        .exists()) {
+        if (Paths.get(cwd, "pom.xml").toFile().exists()) {
             log.debug("recognized maven project")
             Configuration.REPORT_DIRECTORY.setIfMissing("target/pebuild.d")
         }

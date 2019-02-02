@@ -9,6 +9,7 @@ import java.io.OutputStream
 import java.io.PrintStream
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 class PELogger(private val clazz: String,
                private val outStream: OutputStream = System.err,
@@ -63,15 +64,42 @@ class PELogger(private val clazz: String,
     private fun lazyInitLogLevel(): Level {
 
         val (_, levelGlobal) = detectLogLevel("$logPrefix.defaultLogLevel")
-        val (foundClazz, levelClazz) = detectLogLevel("$logPrefix.log.$clazz")
 
-        var computelLevel = levelGlobal
-        if (foundClazz) {
-            computelLevel = levelClazz
+        val clazzLevels = buildClazzHierarchy()
+        val clazzLevelMap = linkedMapOf<String, Level>()
+
+        var upperLevel = levelGlobal
+        for (i in 0..(clazzLevels.size - 1)) {
+            val thisClass = clazzLevels[i]
+            val (foundClazz, levelClazz) = detectLogLevel("$logPrefix.log.$thisClass")
+
+            var computelLevel = upperLevel
+            if (foundClazz) {
+                computelLevel = levelClazz
+
+                if (computelLevel.ordinal > upperLevel.ordinal) {
+                    upperLevel = computelLevel
+                }
+            }
+
+            clazzLevelMap[thisClass] = computelLevel
         }
-//        printOut("LOGGGING  ${this.clazz} level: $computelLevel")
 
-        return computelLevel
+        return clazzLevelMap[clazz] ?: levelGlobal
+    }
+
+    private fun buildClazzHierarchy(): ArrayList<String> {
+        val parts = clazz.split(".").toTypedArray()
+        val clazzLevels = ArrayList<String>(parts.size)
+
+        for (i in 0..(parts.size - 1)) {
+            var level = parts[0]
+            for (j in 1..i) {
+                level += "." + parts[j]
+            }
+            clazzLevels.add(level)
+        }
+        return clazzLevels
     }
 
     private fun detectLogLevel(key: String): Pair<Boolean, Level> {

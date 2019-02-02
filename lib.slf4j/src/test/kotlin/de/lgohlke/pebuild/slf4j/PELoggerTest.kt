@@ -55,6 +55,29 @@ internal class PELoggerTest {
         }
 
         @Test
+        fun `should log when set INFO in upper hierarchy2`() {
+            properties.setProperty(logger.logPrefix + ".log.x", "WARN")
+            properties.setProperty(logger.logPrefix + ".log.x.y", "DEBUG")
+
+            val logger = PELogger(clazz = "x.y.z", outStream = outStream, properties = properties)
+
+            logger.info("4¹14")
+
+            assertOutput().endsWith("4¹14\n")
+        }
+
+        @Test
+        fun `should log when set INFO in upper hierarchy`() {
+            properties.setProperty(logger.logPrefix + ".log.x", "INFO")
+
+            val logger = PELogger(clazz = "x.y.z", outStream = outStream, properties = properties)
+
+            logger.info("4¹14")
+
+            assertOutput().endsWith("4¹14\n")
+        }
+
+        @Test
         fun `clazz config should override global config`() {
             properties.setProperty(logger.logPrefix + ".defaultLogLevel", "INFO")
             properties.setProperty(logger.logPrefix + ".log.x", "WARN")

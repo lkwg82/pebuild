@@ -3,12 +3,15 @@ package de.lgohlke.pebuild.graph
 import de.lgohlke.pebuild.StepExecutor
 import de.lgohlke.pebuild.graph.validators.CycleValidator
 import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator
+import io.micrometer.core.instrument.Metrics
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
 import reactor.core.scheduler.Schedulers.elastic
 import java.time.Duration
 import java.util.LinkedHashSet
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.HashSet
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.component1
@@ -18,29 +21,44 @@ import kotlin.collections.set
 class ExecutionGraph(val steps: Collection<StepExecutor>,
                      private val finalStep: StepExecutor,
                      val timeout: Duration) {
-    fun execute() {
-        val cachedSteps = steps.map { step ->
-            step to createCachedMono(step)
-        }.toMap()
 
+    private val startTimes = ConcurrentHashMap<String, Long>()
+
+    fun execute() {
+
+        Metrics.globalRegistry.add(SimpleMeterRegistry())
+
+        val cachedSteps = steps.map { step -> step to createCachedMono(step) }.toMap()
         val graph = createExecutionGraph(finalStep, cachedSteps).log()
 
         graph.timeout(timeout)
-                .onErrorResume { Mono.empty() }
-                .blockLast()
+            // fail fast
+            // stop the whole graph in case of timeout or another error
+            .onErrorResume { Mono.empty() }
+            .blockLast()
+
+        // TODO
+        println(Metrics.globalRegistry)
     }
 
+    // TODO
     class StepError(val step: StepExecutor,
-                    val error: Throwable) : java.lang.RuntimeException(error)
+                    private val error: Throwable) : java.lang.RuntimeException(error)
 
     private fun createCachedMono(step: StepExecutor): Mono<StepExecutor> {
-        return Mono.fromRunnable<StepExecutor>(step::execute)
-                .subscribeOn(elastic())
-                .timeout(step.timeout)
-                .onErrorMap { error -> StepError(step, error) }
-                .doOnError { step.cancel() }
-                .cache()
-                .doOnCancel { step.cancel() }
+        val runnable = Runnable {
+            startTimes[step.name] = System.currentTimeMillis()
+            Metrics.globalRegistry.timer(step.name).wrap(step::execute).run()
+        }
+        return Mono.fromRunnable<StepExecutor>(runnable)
+            .name(step.name)
+            .metrics()
+            .subscribeOn(elastic())
+            .timeout(step.timeout)
+            .onErrorMap { error -> StepError(step, error) }
+            .doOnError { step.cancel() }
+            .cache()
+            .doOnCancel { step.cancel() }
     }
 
     private fun createExecutionGraph(step: StepExecutor,
@@ -65,8 +83,8 @@ class ExecutionGraph(val steps: Collection<StepExecutor>,
 
         private fun createFinalStep(executors: Collection<StepExecutor>): StepExecutor {
             val finalSteps = createSuccessorMap(executors)
-                    .filter { (_, successors) -> successors.isEmpty() }
-                    .map { (node, _) -> node }
+                .filter { (_, successors) -> successors.isEmpty() }
+                .map { (node, _) -> node }
             val theFinalStep = object : StepExecutor("end", "") {}
             finalSteps.forEach { step -> theFinalStep.waitFor(step) }
             return theFinalStep

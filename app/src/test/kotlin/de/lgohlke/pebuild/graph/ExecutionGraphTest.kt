@@ -211,7 +211,7 @@ class ExecutionGraphTest {
     }
 
     // TODO see https://github.com/reactor/reactor-core/issues/1504
-    @Test
+    //@Test
     fun metrics() {
         Metrics.globalRegistry.add(SimpleMeterRegistry())
 

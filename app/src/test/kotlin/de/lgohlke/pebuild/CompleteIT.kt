@@ -62,12 +62,6 @@ class CompleteIT {
         // TODO hangs on Linux, when shellexecutor init fails to start
 
         @Test
-        fun `should exec date`() {
-            Configuration.REPORT_DIRECTORY.overwrite("target/pebuild.d")
-            Main.fromJava(arrayOf("-d", "exec", "-e", "date"), outP, errP)
-        }
-
-        @Test
         fun `should show help`() {
             Main.fromJava(arrayOf("-h"), outP, errP)
 
@@ -75,17 +69,6 @@ class CompleteIT {
             assertThat(output).isNotEmpty()
             assertThat(output).contains("-h")
             assertThat(output).contains("--help")
-        }
-
-        @Test
-        fun `should echo`() {
-            Configuration.REPORT_DIRECTORY.overwrite("target/pebuild.d")
-
-            Main.fromJava(arrayOf("exec", "-e", "echo hello world"), outP, errP)
-
-            val output = out.toString()
-            assertThat(output).isNotEmpty()
-            assertThat(output).isEqualTo("[test] STDOUT hello world\n")
         }
     }
 }

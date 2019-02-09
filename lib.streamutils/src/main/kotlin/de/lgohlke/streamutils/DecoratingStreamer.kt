@@ -15,10 +15,10 @@ internal class DecoratingStreamer(private val prefixedInputStream: PrefixedInput
         val prefix = prefixedInputStream.prefix
         try {
             Scanner(prefixedInputStream.stream).use { scanner ->
-                log.warn("scanner started: {}", prefix)
+                log.debug("scanner started: {}", prefix)
                 while (scanner.hasNextLine()) {
                     val nextLine = scanner.nextLine()
-                    log.warn("scanner [{}] send: {}", prefix, nextLine)
+                    log.debug("scanner [{}] send: {}", prefix, nextLine)
                     p0.onNext("$prefix $nextLine")
                 }
                 p0.onComplete()
@@ -31,6 +31,6 @@ internal class DecoratingStreamer(private val prefixedInputStream: PrefixedInput
             }
             p0.onError(e)
         }
-        log.warn("scanner closed: {}", prefix)
+        log.debug("scanner closed: {}", prefix)
     }
 }

@@ -9,6 +9,7 @@ import io.micrometer.core.instrument.Metrics
 import io.micrometer.core.instrument.Timer
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import reactor.core.publisher.Mono
@@ -211,7 +212,9 @@ class ExecutionGraphTest {
     }
 
     // TODO see https://github.com/reactor/reactor-core/issues/1504
-    //@Test
+    // see https://github.com/reactor/reactor-core/releases/tag/v3.2.6.RELEASE
+    @Disabled("until reactor 3.2.6 is released")
+    @Test
     fun metrics() {
         Metrics.globalRegistry.add(SimpleMeterRegistry())
 

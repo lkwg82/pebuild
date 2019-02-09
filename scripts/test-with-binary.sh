@@ -5,7 +5,6 @@ set -e
 shopt -s expand_aliases
 
 
-alias bin='target/pebuild'
 
 function t {
     local name=$1
@@ -37,6 +36,16 @@ function t {
     fi
 }
 
-t "help" "bin -h"
-t "exec date" "bin -d exec date"
-t "exit 1" "bin exec exit 1" 1
+for binary in scripts/runJar.sh target/pebuild; do
+
+    echo "-------"
+    echo "testing with ${binary}"
+    echo "-------"
+
+    alias bin=${binary}
+
+    t "help" "bin -h"
+    t "exec date" "bin -d exec date"
+    t "exit 1" "bin exec exit 1" 1
+
+done

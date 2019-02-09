@@ -1,6 +1,8 @@
 package de.lgohlke.pebuild.cli
 
+import de.lgohlke.pebuild.Configuration
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import picocli.CommandLine
 import java.io.ByteArrayOutputStream
@@ -9,6 +11,11 @@ import java.security.SecureRandom
 
 class ExecCommandTest {
     private val outputStream = ByteArrayOutputStream()
+
+    @BeforeEach
+    internal fun setUp() {
+        Configuration.REPORT_DIRECTORY.overwrite("target")
+    }
 
     @Test
     fun exec() {

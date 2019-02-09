@@ -1,7 +1,6 @@
 package de.lgohlke.pebuild.cli
 
 import de.lgohlke.pebuild.EnvironmentConfigurer
-import de.lgohlke.pebuild.ExecCommand
 import picocli.CommandLine
 import java.util.*
 import java.util.concurrent.Callable

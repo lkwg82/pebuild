@@ -67,11 +67,11 @@ steps:
         val cmd = RunCommand()
         cmd.out(out)
         cmd.err(err)
-// TODO use factory method (not existing yet)
+
         val cli = CommandLine(cmd, CommandFactory(out))
-        val handler = CommandLine.RunAll().useOut(out).useAnsi(CommandLine.Help.Ansi.AUTO)
-        val exceptionHandler =
-                CommandLine.DefaultExceptionHandler<List<Any>>().useErr(err).useAnsi(CommandLine.Help.Ansi.AUTO)
+        val ansi = CommandLine.Help.Ansi.AUTO
+        val handler = CommandLine.RunAll().useOut(out).useAnsi(ansi)
+        val exceptionHandler = CommandLine.DefaultExceptionHandler<List<Any>>().useErr(err).useAnsi(ansi)
 
         cli.parseWithHandlers<List<Any>>(handler, exceptionHandler, *args)
     }

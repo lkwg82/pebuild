@@ -21,13 +21,13 @@ class ExecCommandTest {
     fun exec() {
         val random = SecureRandom().nextInt()
 
-        cli(arrayOf("exec", "-e", "echo huhu $random"))
+        cli("exec", "-e", "echo huhu $random")
 
         val out = String(outputStream.toByteArray())
         assertThat(out).isEqualTo("[test] STDOUT huhu $random\n")
     }
 
-    private fun cli(args: Array<String>) {
+    private fun cli(vararg args: String) {
         val exec = ExecCommand()
         exec.out(PrintStream(outputStream))
         CommandLine.call(exec, *args)

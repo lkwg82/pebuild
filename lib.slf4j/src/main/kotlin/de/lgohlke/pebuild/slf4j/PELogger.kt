@@ -3,7 +3,11 @@ package de.lgohlke.pebuild.slf4j
 import org.slf4j.Logger
 import org.slf4j.Marker
 import org.slf4j.event.Level
-import org.slf4j.event.Level.*
+import org.slf4j.event.Level.DEBUG
+import org.slf4j.event.Level.ERROR
+import org.slf4j.event.Level.INFO
+import org.slf4j.event.Level.TRACE
+import org.slf4j.event.Level.WARN
 import org.slf4j.helpers.MessageFormatter
 import java.io.OutputStream
 import java.io.PrintStream
@@ -123,36 +127,36 @@ class PELogger(private val clazz: String,
     internal inner class TODO : RuntimeException()
 
     override fun isTraceEnabled(): Boolean {
-        throw TODO()
+        return isLevelEnabled(TRACE)
     }
 
     override fun trace(msg: String) {
-        throw TODO()
+        logAndFormat(TRACE, msg)
     }
 
     override fun trace(format: String,
                        arg: Any) {
-        throw TODO()
+        logAndFormat(TRACE, format, arg)
     }
 
     override fun trace(format: String,
                        arg1: Any,
                        arg2: Any) {
-        throw TODO()
+        logAndFormat(TRACE, format, arg1, arg2)
     }
 
     override fun trace(format: String,
                        vararg arguments: Any) {
-        throw TODO()
+        logAndFormat(TRACE, format, arguments)
     }
 
     override fun trace(msg: String,
                        t: Throwable) {
-        throw TODO()
+        logAndFormat(TRACE, msg, t)
     }
 
     override fun isTraceEnabled(marker: Marker): Boolean {
-        throw TODO()
+        return isLevelEnabled(TRACE)
     }
 
     override fun trace(marker: Marker,
@@ -163,20 +167,20 @@ class PELogger(private val clazz: String,
     override fun trace(marker: Marker,
                        format: String,
                        arg: Any) {
-        throw TODO()
+        logAndFormat(TRACE, format, arg)
     }
 
     override fun trace(marker: Marker,
                        format: String,
                        arg1: Any,
                        arg2: Any) {
-        throw TODO()
+        logAndFormat(TRACE, format, arg1, arg2)
     }
 
     override fun trace(marker: Marker,
                        format: String,
                        vararg argArray: Any) {
-        throw TODO()
+        logAndFormat(TRACE, format, argArray)
     }
 
     override fun trace(marker: Marker,
@@ -211,7 +215,7 @@ class PELogger(private val clazz: String,
 
     override fun debug(msg: String,
                        t: Throwable) {
-        throw TODO()
+        logAndFormat(DEBUG, msg, t)
     }
 
     override fun isDebugEnabled(marker: Marker): Boolean {
@@ -285,21 +289,21 @@ class PELogger(private val clazz: String,
     override fun info(format: String,
                       arg1: Any,
                       arg2: Any) {
-        throw TODO()
+        logAndFormat(INFO, format, arg1, arg2)
     }
 
     override fun info(format: String,
                       vararg arguments: Any) {
-        throw TODO()
+        logAndFormat(INFO, format, arguments)
     }
 
     override fun info(msg: String,
                       t: Throwable) {
-        throw TODO()
+        logAndFormat(INFO, msg, t)
     }
 
     override fun isInfoEnabled(marker: Marker): Boolean {
-        throw TODO()
+        return isLevelEnabled(INFO)
     }
 
     override fun info(marker: Marker,
@@ -362,7 +366,7 @@ class PELogger(private val clazz: String,
     }
 
     override fun isWarnEnabled(marker: Marker): Boolean {
-        throw TODO()
+        return isLevelEnabled(WARN)
     }
 
     override fun warn(marker: Marker,
@@ -411,7 +415,7 @@ class PELogger(private val clazz: String,
     override fun error(format: String,
                        arg1: Any,
                        arg2: Any) {
-        throw TODO()
+        logAndFormat(ERROR, format, arg1, arg2)
     }
 
     override fun error(format: String,
@@ -425,7 +429,7 @@ class PELogger(private val clazz: String,
     }
 
     override fun isErrorEnabled(marker: Marker): Boolean {
-        throw TODO()
+        return isLevelEnabled(ERROR)
     }
 
     override fun error(marker: Marker,
@@ -449,7 +453,7 @@ class PELogger(private val clazz: String,
     override fun error(marker: Marker,
                        format: String,
                        vararg arguments: Any) {
-        throw TODO()
+        logAndFormat(ERROR, format, arguments)
     }
 
     override fun error(marker: Marker,

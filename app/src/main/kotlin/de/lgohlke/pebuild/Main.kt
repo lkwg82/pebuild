@@ -1,10 +1,11 @@
 package de.lgohlke.pebuild
 
 import de.lgohlke.pebuild.cli.CLI
-import de.lgohlke.pebuild.config.BuildConfigReader
 import picocli.CommandLine
-import picocli.CommandLine.*
+import picocli.CommandLine.DefaultExceptionHandler
 import picocli.CommandLine.Help.Ansi.AUTO
+import picocli.CommandLine.IFactory
+import picocli.CommandLine.RunAll
 import java.io.File
 import java.io.IOException
 import java.io.PrintStream
@@ -43,8 +44,6 @@ class Main {
             val exceptionHandler = exceptionHandler1.useErr(err).useAnsi(AUTO)
 
             cmd.parseWithHandlers<List<Any>>(handler, exceptionHandler, *args)
-
-            graalvmTest()
         }
 
         class CommandFactory(private val out: PrintStream) : IFactory {
@@ -70,25 +69,6 @@ class Main {
                     (instance as OverrideSTDOUT).out(out)
                 }
             }
-        }
-
-        private fun graalvmTest() {
-            // TODO yust for testing native-image compilation
-
-            val yaml = "" +
-                    "options: \n" +
-                    "  timeout: 10m\n" +
-                    "\n" +
-                    "steps:\n" +
-                    "- name: demo\n" +
-                    "  command: 'date'\n" +
-                    "- name: sleep\n" +
-                    "  command: 'sleep 2'\n" +
-                    "  timeout: 10s\n" +
-                    "  waitfor: ['demo']"
-            BuildConfigReader.parse(yaml)
-
-            GraphBuilder.build(yaml)
         }
     }
 

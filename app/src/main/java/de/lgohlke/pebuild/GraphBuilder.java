@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GraphBuilder {
-    static ExecutionGraph build(@NonNull String yaml) {
+    public static ExecutionGraph build(@NonNull String yaml) {
 
         BuildConfig buildConfig = BuildConfigReader.parse(yaml);
 

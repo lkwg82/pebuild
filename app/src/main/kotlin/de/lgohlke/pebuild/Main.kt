@@ -11,13 +11,12 @@ class Main {
 
         @JvmStatic
         fun main(args: Array<String>) {
-            fromCLI(args)
-        }
-
-        private fun fromCLI(args: Array<String>) {
             CLI.run(args, RunAll().andExit(0), DefaultExceptionHandler<List<Any>>().andExit(1), CLI())
         }
 
+        // this is only for tests to
+        // - inject STDOUT and STDERR
+        // - not to call System.exit
         fun fromJava(args: Array<String>,
                      out: PrintStream,
                      err: PrintStream) {

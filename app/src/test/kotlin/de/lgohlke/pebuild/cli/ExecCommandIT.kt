@@ -21,7 +21,7 @@ class ExecCommandIT {
     fun exec() {
         val random = SecureRandom().nextInt()
 
-        cli("exec", "-e", "echo huhu $random")
+        cli("-e", "echo huhu $random")
 
         val out = String(outputStream.toByteArray())
         assertThat(out).isEqualTo("[test] STDOUT huhu $random\n")

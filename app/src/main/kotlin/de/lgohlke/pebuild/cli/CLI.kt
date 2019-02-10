@@ -1,5 +1,6 @@
 package de.lgohlke.pebuild.cli
 
+import de.lgohlke.pebuild.Configuration
 import de.lgohlke.pebuild.EnvironmentConfigurer
 import picocli.CommandLine
 import java.io.PrintStream
@@ -32,8 +33,12 @@ class CLI(private val prop: Properties = System.getProperties()) : Callable<Void
     override fun call(): Void? {
         decideAboutLogging()
 
+        Configuration.configureDefaults()
         EnvironmentConfigurer.mergeEnvironmentAndSystemProperties()
         EnvironmentConfigurer().configureMeaningfullDefaults()
+        Configuration.showConfig()
+
+
         return null
     }
 

@@ -1,4 +1,4 @@
-package de.lgohlke.pebuild
+package de.lgohlke.pebuild.cli
 
 import java.io.PrintStream
 

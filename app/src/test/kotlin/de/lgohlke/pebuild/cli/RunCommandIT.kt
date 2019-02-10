@@ -2,6 +2,7 @@ package de.lgohlke.pebuild.cli
 
 import de.lgohlke.pebuild.Configuration
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
@@ -11,7 +12,7 @@ import java.io.PrintStream
 import java.nio.file.Files
 import java.security.SecureRandom
 
-class RunCommandTest {
+class RunCommandIT {
     private val outputStream = ByteArrayOutputStream()
     private val errStream = ByteArrayOutputStream()
 
@@ -22,6 +23,11 @@ class RunCommandTest {
     @BeforeEach
     internal fun setUp() {
         Configuration.REPORT_DIRECTORY.overwrite(outputDir.toFile().absolutePath)
+    }
+
+    @AfterEach
+    internal fun tearDown() {
+        Configuration.REPORT_DIRECTORY.overwrite("")
     }
 
     @Test

@@ -6,11 +6,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import picocli.CommandLine
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.file.Paths
 
-class CompleteIT {
+class MainIT {
     private val out = ByteArrayOutputStream()
     private val err = ByteArrayOutputStream()
 
@@ -19,12 +20,10 @@ class CompleteIT {
 
     @BeforeEach
     fun setUp() {
-        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.MergingStreamFascade", "DEBUG")
-        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.streamutils.DecoratingStreamer", "DEBUG")
-        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke.pebuild.ShellExecutor", "DEBUG")
+        System.setProperty("org.slf4j.simpleLogger.log.de.lgohlke", "DEBUG")
     }
 
-    @RepeatedTest(100)
+    @RepeatedTest(10)
     fun simpleRun() {
         val targetPath = Paths.get("target", "pebuild.d_" + System.currentTimeMillis())
         val absolutePath = targetPath.toFile().absolutePath
@@ -33,7 +32,7 @@ class CompleteIT {
         System.setProperty("PEBUILD_FILE", "src/test/resources/integration/simple.pbuild.yml")
 
         // action
-        Main().run()
+        Main.fromJava(arrayOf("run"), System.out, System.err)
 
         assertThat(targetPath).isDirectory()
         // TODO how should the timings being captured
@@ -51,11 +50,11 @@ class CompleteIT {
             System.setProperty("PEBUILD_FILE", "unknown.pbuild.yml")
 
             try {
-                Main().run()
+                Main.fromJava(arrayOf("run"), outP, errP)
 
                 fail<Any>("should fail on missing config")
-            } catch (e: IllegalStateException) {
-                assertThat(e.message).isEqualTo("missing config file: unknown.pbuild.yml")
+            } catch (e: CommandLine.PicocliException) {
+                assertThat(e.message).contains("can not find config file unknown.pbuild.yml")
             }
         }
 

@@ -1,8 +1,7 @@
 package de.lgohlke.pebuild.cli
 
+import de.lgohlke.pebuild.Configuration
 import de.lgohlke.pebuild.GraphBuilder
-import de.lgohlke.pebuild.OverrideSTDERR
-import de.lgohlke.pebuild.OverrideSTDOUT
 import picocli.CommandLine
 import java.io.File
 import java.io.PrintStream
@@ -23,7 +22,7 @@ class RunCommand : Callable<Void>,
 
     @CommandLine.Option(names = ["--file"],
                         description = ["path to config"])
-    var configFile = "pebuild.yaml"
+    var configFile = Configuration.FILE.value()
 
     override fun call(): Void? {
 
@@ -35,7 +34,7 @@ class RunCommand : Callable<Void>,
         val content = Files.readAllBytes(file.toPath())
         val yaml = String(content)
 
-        GraphBuilder.build(yaml)
+        val graph = GraphBuilder.build(yaml)
 
         if (dryRun) {
             out.println("- dry run -")
@@ -43,6 +42,8 @@ class RunCommand : Callable<Void>,
             out.println()
             return null // TODO needs exit code
         }
+
+        graph.execute()
 
         return null
     }

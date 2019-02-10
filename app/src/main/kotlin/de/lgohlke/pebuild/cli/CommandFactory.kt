@@ -1,6 +1,5 @@
 package de.lgohlke.pebuild.cli
 
-import de.lgohlke.pebuild.OverrideSTDOUT
 import picocli.CommandLine
 import java.io.PrintStream
 

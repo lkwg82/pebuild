@@ -1,6 +1,7 @@
 package de.lgohlke.pebuild;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Paths;
 
@@ -12,6 +13,7 @@ public enum Configuration {
 
     private final static String NAMESPACE = "PEBUILD";
 
+    @NotNull
     public String value() {
         return System.getProperty(fullName(), "");
     }

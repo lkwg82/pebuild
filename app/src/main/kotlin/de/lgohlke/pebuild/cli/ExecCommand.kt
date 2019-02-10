@@ -8,7 +8,8 @@ import java.time.Duration
 import java.util.concurrent.Callable
 
 @CommandLine.Command(name = "exec", aliases = ["e"])
-class ExecCommand : Callable<Void>, OverrideSTDOUT {
+class ExecCommand : Callable<Void>,
+                    OverrideSTDOUT {
     var out: PrintStream = System.out
 
     @CommandLine.Option(names = ["-e"],

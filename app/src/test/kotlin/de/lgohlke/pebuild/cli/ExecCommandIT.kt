@@ -9,7 +9,7 @@ import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.security.SecureRandom
 
-class ExecCommandTest {
+class ExecCommandIT {
     private val outputStream = ByteArrayOutputStream()
 
     @BeforeEach

@@ -14,9 +14,11 @@ class Main {
             CLI.run(args, RunAll().andExit(0), DefaultExceptionHandler<List<Any>>().andExit(1), CLI())
         }
 
-        // this is only for tests to
-        // - inject STDOUT and STDERR
-        // - not to call System.exit
+        /**
+         * this is only for tests to
+         * - inject STDOUT and STDERR
+         * - not to call System.exit
+         */
         fun fromJava(args: Array<String>,
                      out: PrintStream,
                      err: PrintStream) {

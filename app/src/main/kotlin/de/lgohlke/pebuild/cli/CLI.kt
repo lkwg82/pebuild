@@ -6,7 +6,7 @@ import java.util.*
 import java.util.concurrent.Callable
 
 @CommandLine.Command(name = "pebuild",
-                     subcommands = [ExecCommand::class, CommandLine.HelpCommand::class],
+                     subcommands = [ExecCommand::class, RunCommand::class, CommandLine.HelpCommand::class],
                      mixinStandardHelpOptions = true)
 class CLI(private val prop: Properties = System.getProperties()) : Callable<Void> {
     override fun call(): Void? {

@@ -248,7 +248,7 @@
     ]
   },
   {
-    "name" : "de.lgohlke.pebuild.ExecCommand",
+    "name" : "de.lgohlke.pebuild.cli.ExecCommand",
     "allDeclaredConstructors" : true,
     "allPublicConstructors" : true,
     "allDeclaredMethods" : true,
@@ -271,6 +271,17 @@
     "allPublicConstructors" : true,
     "allDeclaredMethods" : true,
     "allPublicMethods" : true
+  },
+  {
+    "name" : "de.lgohlke.pebuild.cli.RunCommand",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true,
+    "fields" : [
+      { "name" : "dryRun" },
+      { "name" : "configFile" }
+    ]
   },
   {
     "name" : "picocli.CommandLine$HelpCommand",

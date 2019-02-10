@@ -47,5 +47,6 @@ for binary in scripts/runJar.sh target/pebuild; do
     t "help" "bin -h"
     t "exec date" "bin -d exec date"
     t "exit 1" "bin exec exit 1" 1
+    t "run --dry-run --file integration/simple.pbuild.yml"
 
 done

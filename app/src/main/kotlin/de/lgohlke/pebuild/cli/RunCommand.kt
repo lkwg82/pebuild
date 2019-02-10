@@ -13,8 +13,8 @@ import java.util.concurrent.Callable
 class RunCommand : Callable<Void>,
                    OverrideSTDOUT,
                    OverrideSTDERR {
-    var out: PrintStream = System.out
-    var err: PrintStream = System.err
+    private var out: PrintStream = System.out
+    private var err: PrintStream = System.err
 
     @CommandLine.Option(names = ["--dry-run"],
                         description = ["only checks config"])

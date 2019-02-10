@@ -4,6 +4,7 @@ import de.lgohlke.pebuild.Configuration
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import picocli.CommandLine
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -50,16 +51,28 @@ steps:
 
     @Test
     fun `should fail on missing file`() {
-        cli()
 
-        val out = String(errStream.toByteArray())
-        assertThat(out).contains("can not find config file")
+        try {
+            cli()
+            fail("should fail")
+        } catch (e: CommandLine.PicocliException) {
+            assertThat(e.message).contains("can not find config file")
+        }
     }
 
     private fun cli(vararg args: String) {
+        val out = PrintStream(outputStream)
+        val err = PrintStream(errStream)
+
         val cmd = RunCommand()
-        cmd.out(PrintStream(outputStream))
-        cmd.err(PrintStream(errStream))
-        CommandLine.call(cmd, *args)
+        cmd.out(out)
+        cmd.err(err)
+// TODO use factory method (not existing yet)
+        val cli = CommandLine(cmd, CommandFactory(out))
+        val handler = CommandLine.RunAll().useOut(out).useAnsi(CommandLine.Help.Ansi.AUTO)
+        val exceptionHandler =
+                CommandLine.DefaultExceptionHandler<List<Any>>().useErr(err).useAnsi(CommandLine.Help.Ansi.AUTO)
+
+        cli.parseWithHandlers<List<Any>>(handler, exceptionHandler, *args)
     }
 }

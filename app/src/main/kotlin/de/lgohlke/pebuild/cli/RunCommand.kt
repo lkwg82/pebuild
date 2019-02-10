@@ -13,6 +13,7 @@ import java.util.concurrent.Callable
 class RunCommand : Callable<Void>,
                    OverrideSTDOUT,
                    OverrideSTDERR {
+
     private var out: PrintStream = System.out
     private var err: PrintStream = System.err
 
@@ -28,8 +29,7 @@ class RunCommand : Callable<Void>,
 
         val file = File(configFile)
         if (!file.isFile) {
-            err.println("can not find config file $configFile")
-            return null // TODO needs exit code
+            throw CommandLine.PicocliException("can not find config file $configFile")
         }
 
         val content = Files.readAllBytes(file.toPath())

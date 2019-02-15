@@ -10,17 +10,12 @@ class CommandFactory(private val out: PrintStream) : CommandLine.IFactory {
         val newInstance = createNewInstance(cls)
         injectOutErr(newInstance)
         return newInstance
-
     }
 
     private fun <T> createNewInstance(cls: Class<T>): T {
-        return try {
-            cls.newInstance()
-        } catch (ex: Exception) {
-            val constructor = cls.getDeclaredConstructor()
-            constructor.isAccessible = true
-            constructor.newInstance()
-        }
+        val constructor = cls.getDeclaredConstructor()
+        constructor.isAccessible = true
+        return constructor.newInstance()
     }
 
     private fun <T> injectOutErr(instance: T) {

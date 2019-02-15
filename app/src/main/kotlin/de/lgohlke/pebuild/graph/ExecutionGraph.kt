@@ -3,15 +3,14 @@ package de.lgohlke.pebuild.graph
 import de.lgohlke.pebuild.StepExecutor
 import de.lgohlke.pebuild.graph.validators.CycleValidator
 import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator
-import io.micrometer.core.instrument.Metrics
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
 import reactor.core.scheduler.Schedulers.elastic
 import java.time.Duration
-import java.util.LinkedHashSet
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.collections.HashSet
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.component1
@@ -22,13 +21,14 @@ class ExecutionGraph(val steps: Collection<StepExecutor>,
                      private val finalStep: StepExecutor,
                      val timeout: Duration) {
 
-    private val startTimes = ConcurrentHashMap<String, Long>()
-
     fun execute() {
+        val timingContext = TimingContext()
+        timingContext.time("__global__") { innerExecute(timingContext) }
+        timingContext.save()
+    }
 
-        Metrics.globalRegistry.add(SimpleMeterRegistry())
-
-        val cachedSteps = steps.map { step -> step to createCachedMono(step) }.toMap()
+    private fun innerExecute(timingContext: TimingContext) {
+        val cachedSteps = steps.map { step -> step to createCachedMono(step, timingContext) }.toMap()
         val graph = createExecutionGraph(finalStep, cachedSteps).log()
 
         graph.timeout(timeout)
@@ -36,23 +36,54 @@ class ExecutionGraph(val steps: Collection<StepExecutor>,
             // stop the whole graph in case of timeout or another error
             .onErrorResume { Mono.empty() }
             .blockLast()
+    }
 
-        // TODO
-        println(Metrics.globalRegistry)
+    class TimingContext {
+        data class Timing(val start: Long,
+                          val end: Long)
+
+        private val timings = ConcurrentHashMap<String, Long>()
+        private val finishedTimings = ConcurrentLinkedQueue<Timing>()
+
+        private fun start(name: String) {
+            timings[name] = System.currentTimeMillis()
+        }
+
+        private fun stop(name: String) {
+            val start = timings[name] ?: throw IllegalStateException("could not stop a not started task: $name")
+            val end = System.currentTimeMillis()
+
+            finishedTimings.add(Timing(start, end))
+            timings.remove(name)
+        }
+
+        fun save() {
+//            finishedTimings.toArray()
+            // TODO
+        }
+
+        fun time(name: String,
+                 execution: () -> Unit) {
+            start(name)
+            try {
+                execution()
+            } finally {
+                stop(name)
+            }
+        }
     }
 
     // TODO
     class StepError(val step: StepExecutor,
                     private val error: Throwable) : java.lang.RuntimeException(error)
 
-    private fun createCachedMono(step: StepExecutor): Mono<StepExecutor> {
+    private fun createCachedMono(step: StepExecutor,
+                                 timingContext: TimingContext): Mono<StepExecutor> {
         val runnable = Runnable {
-            startTimes[step.name] = System.currentTimeMillis()
-            Metrics.globalRegistry.timer(step.name).wrap(step::execute).run()
+            timingContext.time(step.name) { step.execute() }
         }
         return Mono.fromRunnable<StepExecutor>(runnable)
             .name(step.name)
-            .metrics()
             .subscribeOn(elastic())
             .timeout(step.timeout)
             .onErrorMap { error -> StepError(step, error) }

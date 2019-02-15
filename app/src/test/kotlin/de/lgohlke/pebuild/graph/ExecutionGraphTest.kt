@@ -5,14 +5,9 @@ import de.lgohlke.pebuild.StepExecutor
 import de.lgohlke.pebuild.graph.ExecutionGraph.Builder.DuplicateJobException
 import de.lgohlke.pebuild.graph.validators.CycleValidator.CycleDetected
 import de.lgohlke.pebuild.graph.validators.ReferencedJobMissingValidator.ReferencedJobsMissing
-import io.micrometer.core.instrument.Metrics
-import io.micrometer.core.instrument.Timer
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import reactor.core.publisher.Mono
 import java.time.Duration
 import java.time.Duration.ofMillis
 import java.util.*
@@ -53,13 +48,6 @@ class ExecutionGraphTest {
                 assertThat(executions).endsWith("f", "b", "d")
             } catch (e: AssertionError) {
                 assertThat(executions).endsWith("f", "d", "b")
-            }
-        }
-
-        Metrics.globalRegistry.meters.forEach { meter ->
-            if (meter is Timer) {
-                println(meter.id.name)
-                println(" total ms: (#" + meter.count() + ") " + meter.totalTime(TimeUnit.MILLISECONDS))
             }
         }
     }
@@ -209,29 +197,6 @@ class ExecutionGraphTest {
         val builder = ExecutionGraph.Builder().addJob(a)
 
         assertThrows<ReferencedJobsMissing> { builder.build() }
-    }
-
-    // TODO see https://github.com/reactor/reactor-core/issues/1504
-    // see https://github.com/reactor/reactor-core/releases/tag/v3.2.6.RELEASE
-    @Disabled("until reactor 3.2.6 is released")
-    @Test
-    fun metrics() {
-        Metrics.globalRegistry.add(SimpleMeterRegistry())
-
-        val mono = Mono.fromRunnable<Any>(Runnable {
-            println("sleep 1s")
-            TimeUnit.SECONDS.sleep(1)
-        }).name("test")
-
-        mono.metrics()
-            .subscribe()
-
-        Metrics.globalRegistry.meters.forEach { m ->
-            if (m is Timer) {
-                print(m.id.name + " " + m.id.tags[1] + " " + m.id.tags[2].value)
-                println(" total time " + m.totalTime(TimeUnit.MILLISECONDS) + "ms")
-            }
-        }
     }
 
     open class DummyExecutor(private val name2: String,
